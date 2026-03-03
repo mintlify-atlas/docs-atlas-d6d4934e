@@ -1,0 +1,207 @@
+---
+title: install
+description: Install and convert a Claude plugin from GitHub or local path
+---
+
+The `install` command fetches a Claude plugin from GitHub (or uses a local path) and converts it to your target AI coding tool format.
+
+## Usage
+
+```bash
+compound-plugin install <plugin> [options]
+```
+
+## Arguments
+
+<ParamField path="plugin" type="string" required>
+  Plugin name (fetched from GitHub) or local path (must start with `.`, `/`, or `~`).
+  
+  Examples:
+  - `compound-engineering` - Fetches from GitHub
+  - `./my-plugin` - Uses local directory
+  - `~/plugins/my-plugin` - Uses home directory path
+</ParamField>
+
+## Options
+
+<ParamField path="--to" type="string" default="opencode">
+  Target format to convert to.
+  
+  **Available targets:**
+  - `opencode` (default)
+  - `codex`
+  - `droid`
+  - `cursor`
+  - `pi`
+  - `copilot`
+  - `gemini`
+  - `kiro`
+  - `windsurf`
+  - `openclaw`
+  - `qwen`
+  - `all` - Auto-detects and installs to all detected tools
+</ParamField>
+
+<ParamField path="--output" type="string" alias="-o">
+  Output directory (project root).
+  
+  **Default behavior:**
+  - For OpenCode: `~/.config/opencode`
+  - For other targets: varies by tool
+</ParamField>
+
+<ParamField path="--scope" type="string">
+  Scope level for the installation.
+  
+  Options: `global` | `workspace`
+  
+  Default varies by target. Use `global` to install system-wide, or `workspace` for project-specific installation.
+</ParamField>
+
+<ParamField path="--also" type="string">
+  Comma-separated list of additional targets to generate.
+  
+  Example: `--also codex,pi` installs to the primary target plus Codex and Pi.
+</ParamField>
+
+<ParamField path="--permissions" type="string" default="none">
+  Permission mapping written to `opencode.json`.
+  
+  Options:
+  - `none` (default) - No permissions written to config
+  - `broad` - Write broad permission mappings
+  - `from-commands` - Infer permissions from command definitions
+  
+  <Note>
+    Default is `none` to avoid polluting user config with global permissions. See ADR-003 for details.
+  </Note>
+</ParamField>
+
+<ParamField path="--agent-mode" type="string" default="subagent">
+  Default agent mode for the plugin.
+  
+  Options: `primary` | `subagent`
+</ParamField>
+
+<ParamField path="--infer-temperature" type="boolean" default="true">
+  Infer agent temperature from plugin name and description.
+</ParamField>
+
+### Target-Specific Options
+
+<ParamField path="--codex-home" type="string">
+  Write Codex output to this `.codex` root.
+  
+  Example: `~/.codex`
+</ParamField>
+
+<ParamField path="--pi-home" type="string">
+  Write Pi output to this Pi root.
+  
+  Example: `~/.pi/agent` or `./.pi`
+</ParamField>
+
+<ParamField path="--openclaw-home" type="string">
+  Write OpenClaw output to this extensions root.
+  
+  Example: `~/.openclaw/extensions`
+</ParamField>
+
+<ParamField path="--qwen-home" type="string">
+  Write Qwen output to this Qwen extensions root.
+  
+  Example: `~/.qwen/extensions`
+</ParamField>
+
+## Examples
+
+### Install from GitHub to OpenCode
+
+```bash
+compound-plugin install compound-engineering
+```
+
+Installs the `compound-engineering` plugin from GitHub to `~/.config/opencode`.
+
+### Install to Multiple Targets
+
+<CodeGroup>
+```bash Using --also
+compound-plugin install compound-engineering --to opencode --also codex,pi
+```
+
+```bash Using --to all
+compound-plugin install compound-engineering --to all
+```
+</CodeGroup>
+
+The `--also` flag installs to specific additional targets, while `--to all` auto-detects all installed AI coding tools.
+
+### Install Local Plugin
+
+```bash
+compound-plugin install ./my-custom-plugin --to opencode
+```
+
+Installs a plugin from a local directory. Paths starting with `.`, `/`, or `~` are treated as local paths.
+
+### Install to Custom Output Directory
+
+```bash
+compound-plugin install compound-engineering --output ./my-project
+```
+
+Installs to a custom directory instead of the default location.
+
+### Install with Broad Permissions
+
+```bash
+compound-plugin install compound-engineering --permissions broad
+```
+
+<Warning>
+  Use broad permissions carefully. This writes global permission mappings to your `opencode.json` config.
+</Warning>
+
+### Install to Workspace Scope
+
+```bash
+compound-plugin install compound-engineering --scope workspace --output ./my-project
+```
+
+Installs at workspace level for project-specific usage.
+
+## Behavior
+
+### Plugin Resolution
+
+1. **GitHub fetch:** If the plugin argument doesn't start with `.`, `/`, or `~`, it's fetched from GitHub:
+   - Repository: `https://github.com/EveryInc/compound-engineering-plugin`
+   - Plugin path: `plugins/<plugin-name>`
+   - Uses shallow clone (`--depth 1`) for performance
+   - Cleans up temporary files after installation
+
+2. **Local path:** If the path starts with `.`, `/`, or `~`, it's resolved as a local directory path.
+
+### Target Detection (--to all)
+
+When using `--to all`, the CLI detects installed tools by checking:
+- Config file existence
+- Installation paths
+- Tool-specific markers
+
+It only installs to detected tools and skips uninstalled ones.
+
+## Difference from convert
+
+The `install` command:
+- Fetches plugins from GitHub by default
+- Defaults output to `~/.config/opencode` (global config)
+- Sets `--permissions` default to `none`
+
+The `convert` command:
+- Requires a local path
+- Defaults output to current working directory
+- Sets `--permissions` default to `broad`
+
+Use `install` for production usage, and `convert` for local development and testing.

@@ -1,0 +1,304 @@
+---
+title: Windsurf
+description: Convert Claude Code plugins to Windsurf skills and workflows
+icon: wind
+---
+
+The Windsurf converter creates skills (from agents) and workflows (from commands) with support for global and workspace scopes.
+
+## Installation
+
+### Global Scope (default)
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to windsurf
+```
+
+Writes to `~/.codeium/windsurf/`:
+
+```
+~/.codeium/windsurf/
+├── skills/
+│   ├── agent-name/
+│   │   └── SKILL.md          # Agent skills
+│   └── existing-skill/       # Pass-through skills
+├── global_workflows/
+│   └── *.md                  # Command workflows (global)
+└── mcp_config.json           # MCP server config
+```
+
+### Workspace Scope
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to windsurf --scope workspace
+```
+
+Writes to `.windsurf/` in your project:
+
+```
+.windsurf/
+├── skills/
+├── workflows/                # Command workflows (workspace)
+└── mcp_config.json
+```
+
+<Info>
+The only difference between scopes is the workflows directory: `global_workflows/` for global, `workflows/` for workspace.
+</Info>
+
+## Conversion Details
+
+### Agents → Skills
+
+Agents are converted to skills:
+
+```markdown
+---
+name: plan-specialist
+description: Planning agent for complex features
+---
+
+# plan-specialist
+
+## Capabilities
+- Break down complex features
+- Create detailed plans
+
+You are a planning specialist...
+```
+
+### Commands → Workflows
+
+Commands become workflows:
+
+```markdown
+---
+description: Turn feature ideas into detailed plans
+---
+
+# workflows-plan
+
+> Arguments: <feature description>
+
+You are a planning specialist. Use the @repo-research-analyst skill: research the feature.
+```
+
+**Invocation**:
+```
+/workflows-plan
+```
+
+<Warning>
+Workflow content is limited to **12,000 characters**. Longer workflows may be truncated by Windsurf.
+</Warning>
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Use the @repo-research-analyst skill: feature_description
+```
+
+**Slash command refs**:
+```diff
+- Run /workflows:plan
++ Run /workflows-plan
+```
+
+**Agent references**:
+```diff
+- No transformation needed
++ @agent-name is native Windsurf skill syntax
+```
+
+**Path rewriting**:
+```diff
+- ~/.claude/skills/
++ ~/.codeium/windsurf/skills/
+- .claude/
++ .windsurf/
+```
+
+### MCP Servers
+
+MCP servers are merged into `mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    },
+    "remote-api": {
+      "serverUrl": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**Stdio servers**:
+- `command`: Executable path
+- `args`: Command arguments
+- `env`: Environment variables
+
+**Remote servers**:
+- `serverUrl`: HTTP endpoint (mapped from `url`)
+- `headers`: HTTP headers
+- `env`: Environment variables
+
+<Info>
+Existing `mcp_config.json` is preserved. Plugin servers are merged with existing entries taking precedence.
+</Info>
+
+### Secrets Warning
+
+If MCP server configs contain potential secrets, a warning is logged:
+
+```
+Warning: MCP servers contain env vars that may include secrets: filesystem, remote-api.
+   These will be written to mcp_config.json. Review before sharing the config file.
+```
+
+The converter looks for env var keys containing:
+- `KEY`
+- `TOKEN`
+- `SECRET`
+- `PASSWORD`
+- `API`
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output |
+|-------|--------|
+| `workflows:plan` | `workflows-plan` |
+| `Plan Review` | `plan-review` |
+| `my/command` | `my-command` |
+| `UPPERCASE` | `uppercase` |
+
+Rules:
+- Lowercase only
+- Must start with a letter
+- Colons, slashes, spaces → hyphens
+- Special characters removed
+- Multiple hyphens collapsed
+
+## Example Output
+
+**Input** (Claude agent):
+```json
+{
+  "name": "plan-specialist",
+  "description": "Planning agent",
+  "capabilities": ["Break down features"],
+  "body": "You are a planning specialist."
+}
+```
+
+**Output** (`~/.codeium/windsurf/skills/plan-specialist/SKILL.md`):
+```markdown
+---
+name: plan-specialist
+description: Planning agent
+---
+
+# plan-specialist
+
+## Capabilities
+- Break down features
+
+You are a planning specialist.
+```
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create plan",
+  "argumentHint": "<feature description>",
+  "body": "You plan features. Task repo-research-analyst(analyze)."
+}
+```
+
+**Output** (`~/.codeium/windsurf/global_workflows/workflows-plan.md`):
+```markdown
+---
+description: Create plan
+---
+
+# workflows-plan
+
+> Arguments: <feature description>
+
+You plan features. Use the @repo-research-analyst skill: analyze.
+```
+
+## Limitations
+
+- **12K character limit**: Workflow content over 12,000 characters may be truncated
+- **No hooks support**: Windsurf does not have a hooks equivalent
+- **Namespace flattening**: Commands lose namespace prefixes (`workflows:plan` → `workflows-plan`)
+- **Secrets in config**: MCP env vars are written to JSON (review before sharing)
+
+<Warning>
+If your plugin has hooks, they will **not** be converted. Windsurf has no hooks equivalent.
+</Warning>
+
+## Global vs Workspace
+
+<Tabs>
+  <Tab title="Global Scope">
+    Install to `~/.codeium/windsurf/` (default):
+    ```bash
+    bunx @every-env/compound-plugin install compound-engineering --to windsurf
+    ```
+    
+    - Available in all Windsurf sessions
+    - Workflows in `global_workflows/`
+    - Skills and MCP config shared globally
+  </Tab>
+  
+  <Tab title="Workspace Scope">
+    Install to `.windsurf/` in project:
+    ```bash
+    bunx @every-env/compound-plugin install compound-engineering --to windsurf --scope workspace
+    ```
+    
+    - Available only in this project
+    - Workflows in `workflows/`
+    - Project-specific skills and MCP config
+  </Tab>
+</Tabs>
+
+## Sync Support
+
+Sync personal Claude config to Windsurf:
+
+```bash
+bunx @every-env/compound-plugin sync --target windsurf
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (symlinked)
+- Personal commands from `~/.claude/commands/` (as workflows)
+- MCP servers from `~/.claude/settings.json` (merged into `mcp_config.json`)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Windsurf Documentation" icon="wind" href="https://windsurf.ai">
+    Official Windsurf documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Windsurf
+  </Card>
+</CardGroup>

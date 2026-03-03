@@ -1,0 +1,146 @@
+---
+title: list
+description: List available Claude plugins in the repository
+---
+
+The `list` command scans the `plugins/` directory in your current working directory and displays all valid Claude Code plugins.
+
+## Usage
+
+```bash
+compound-plugin list
+```
+
+<Note>
+  This command takes no arguments or options.
+</Note>
+
+## Behavior
+
+The command:
+1. Looks for a `plugins/` directory in the current working directory
+2. Scans each subdirectory for a valid plugin manifest (`.claude-plugin/plugin.json`)
+3. Lists all directories that contain a valid plugin
+
+## Example Output
+
+### With Plugins Available
+
+```bash
+$ compound-plugin list
+compound-engineering
+my-custom-plugin
+test-plugin
+```
+
+Plugins are listed in alphabetical order, one per line.
+
+### No Plugins Directory
+
+```bash
+$ compound-plugin list
+No plugins directory found.
+```
+
+This message appears when there's no `plugins/` directory in the current working directory.
+
+### No Valid Plugins
+
+```bash
+$ compound-plugin list
+No Claude plugins found under plugins/.
+```
+
+This message appears when the `plugins/` directory exists but contains no valid Claude plugins (directories with `.claude-plugin/plugin.json`).
+
+## Use Cases
+
+### Check Available Plugins
+
+```bash
+cd ~/compound-engineering-plugin
+compound-plugin list
+```
+
+Quickly see which plugins are available in the repository.
+
+### Verify Plugin Structure
+
+If your plugin doesn't appear in the list, it's missing the required `.claude-plugin/plugin.json` manifest:
+
+```bash
+# This plugin won't appear in the list:
+plugins/
+  my-plugin/
+    README.md
+    # Missing .claude-plugin/plugin.json
+
+# This plugin will appear:
+plugins/
+  my-plugin/
+    .claude-plugin/
+      plugin.json  ✓
+    README.md
+```
+
+### Find Plugins Before Installing
+
+```bash
+# 1. Clone the plugin repository
+git clone https://github.com/EveryInc/compound-engineering-plugin
+cd compound-engineering-plugin
+
+# 2. List available plugins
+compound-plugin list
+
+# 3. Install a plugin from the list
+compound-plugin install compound-engineering
+```
+
+## Plugin Structure Requirements
+
+For a directory to be recognized as a valid Claude plugin, it must contain:
+
+```
+plugins/
+  <plugin-name>/
+    .claude-plugin/
+      plugin.json     # Required manifest file
+    skills/           # Optional: agent skills
+    commands/         # Optional: custom commands
+    tools/            # Optional: plugin tools
+```
+
+The `.claude-plugin/plugin.json` file must be a valid JSON manifest:
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "description": "My custom plugin",
+  "author": "Your Name"
+}
+```
+
+## Related Commands
+
+- [`install`](/commands/install) - Install a plugin from the list
+- [`convert`](/commands/convert) - Convert a plugin to another format
+
+## Working Directory
+
+The `list` command always looks in the **current working directory** for a `plugins/` folder:
+
+```bash
+# Wrong - won't find plugins in ~/my-plugins
+cd ~
+compound-plugin list
+
+# Correct - lists plugins in ~/my-plugins/plugins/
+cd ~/my-plugins
+compound-plugin list
+```
+
+<Note>
+  If you need to list plugins in a different location, change your working directory with `cd` before running the command.
+</Note>

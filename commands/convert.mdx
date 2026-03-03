@@ -1,0 +1,213 @@
+---
+title: convert
+description: Convert a local Claude Code plugin into another format
+---
+
+The `convert` command transforms a local Claude Code plugin directory into a target AI coding tool format. Unlike `install`, it always uses a local path and defaults output to the current working directory.
+
+## Usage
+
+```bash
+compound-plugin convert <source> [options]
+```
+
+## Arguments
+
+<ParamField path="source" type="string" required>
+  Path to the Claude plugin directory.
+  
+  Must be a valid directory containing `.claude-plugin/plugin.json`.
+</ParamField>
+
+## Options
+
+<ParamField path="--to" type="string" default="opencode">
+  Target format to convert to.
+  
+  **Available targets:**
+  - `opencode` (default)
+  - `codex`
+  - `droid`
+  - `cursor`
+  - `pi`
+  - `copilot`
+  - `gemini`
+  - `kiro`
+  - `windsurf`
+  - `openclaw`
+  - `qwen`
+  - `all` - Auto-detects and converts to all detected tools
+</ParamField>
+
+<ParamField path="--output" type="string" alias="-o">
+  Output directory (project root).
+  
+  **Default:** Current working directory (`process.cwd()`)
+</ParamField>
+
+<ParamField path="--scope" type="string">
+  Scope level for the conversion.
+  
+  Options: `global` | `workspace`
+  
+  Default varies by target.
+</ParamField>
+
+<ParamField path="--also" type="string">
+  Comma-separated list of additional targets to generate.
+  
+  Example: `--also codex,pi` converts to the primary target plus Codex and Pi.
+</ParamField>
+
+<ParamField path="--permissions" type="string" default="broad">
+  Permission mapping for the converted plugin.
+  
+  Options:
+  - `none` - No permissions
+  - `broad` (default) - Write broad permission mappings
+  - `from-commands` - Infer permissions from command definitions
+  
+  <Note>
+    `convert` defaults to `broad` permissions, unlike `install` which defaults to `none`. This is because `convert` is typically used for development and testing.
+  </Note>
+</ParamField>
+
+<ParamField path="--agent-mode" type="string" default="subagent">
+  Default agent mode for the plugin.
+  
+  Options: `primary` | `subagent`
+</ParamField>
+
+<ParamField path="--infer-temperature" type="boolean" default="true">
+  Infer agent temperature from plugin name and description.
+</ParamField>
+
+### Target-Specific Options
+
+<ParamField path="--codex-home" type="string">
+  Write Codex output to this `.codex` root.
+  
+  Example: `~/.codex`
+</ParamField>
+
+<ParamField path="--pi-home" type="string">
+  Write Pi output to this Pi root.
+  
+  Example: `~/.pi/agent` or `./.pi`
+</ParamField>
+
+<ParamField path="--openclaw-home" type="string">
+  Write OpenClaw output to this extensions root.
+  
+  Example: `~/.openclaw/extensions`
+</ParamField>
+
+<ParamField path="--qwen-home" type="string">
+  Write Qwen output to this Qwen extensions root.
+  
+  Example: `~/.qwen/extensions`
+</ParamField>
+
+## Examples
+
+### Convert to OpenCode
+
+```bash
+compound-plugin convert ./plugins/my-plugin
+```
+
+Converts a local plugin to OpenCode format in the current directory.
+
+### Convert to Multiple Targets
+
+<CodeGroup>
+```bash Using --also
+compound-plugin convert ./plugins/my-plugin --to opencode --also codex,pi
+```
+
+```bash Using --to all
+compound-plugin convert ./plugins/my-plugin --to all
+```
+</CodeGroup>
+
+The `--also` flag converts to specific additional targets, while `--to all` auto-detects all installed AI coding tools.
+
+### Convert to Custom Output Directory
+
+```bash
+compound-plugin convert ./plugins/my-plugin --output ./dist
+```
+
+Writes converted output to `./dist` instead of the current directory.
+
+### Convert with No Permissions
+
+```bash
+compound-plugin convert ./plugins/my-plugin --permissions none
+```
+
+Skips writing permission mappings to the output config.
+
+### Convert to Specific Target Home
+
+```bash
+compound-plugin convert ./plugins/my-plugin --to codex --codex-home ~/.codex
+```
+
+Converts to Codex format and writes to a custom Codex home directory.
+
+## Difference from install
+
+The `convert` command:
+- **Always requires a local path** - No GitHub fetching
+- **Defaults output to current directory** - Not global config
+- **Defaults permissions to `broad`** - More permissive for development
+
+The `install` command:
+- **Fetches from GitHub by default** - Can use remote plugin names
+- **Defaults output to `~/.config/opencode`** - Global installation
+- **Defaults permissions to `none`** - More conservative for production
+
+## Use Cases
+
+### Local Development
+
+```bash
+compound-plugin convert ./plugins/my-plugin --to opencode --output ./test
+```
+
+Test your plugin conversion locally before publishing.
+
+### Multi-Target Testing
+
+```bash
+compound-plugin convert ./plugins/my-plugin --to all --output ./dist
+```
+
+Generate output for all targets to verify cross-platform compatibility.
+
+### Plugin Development Workflow
+
+```bash
+# 1. Convert to OpenCode for testing
+compound-plugin convert ./plugins/my-plugin
+
+# 2. Test the output
+ls .opencode/
+
+# 3. Convert to all targets before release
+compound-plugin convert ./plugins/my-plugin --to all --output ./dist
+```
+
+## Target Detection (--to all)
+
+When using `--to all`, the CLI detects installed tools by checking:
+- Config file existence
+- Installation paths
+- Tool-specific markers
+
+It only converts to detected tools and skips uninstalled ones.
+
+<Note>
+  If no AI coding tools are detected, the command will exit with a message: "No AI coding tools detected. Install at least one tool first."
+</Note>

@@ -1,0 +1,76 @@
+---
+title: CLI Commands
+description: Overview of all Compound Engineering Plugin CLI commands
+---
+
+The Compound Engineering Plugin CLI provides commands to install, convert, sync, and list Claude Code plugins across multiple AI coding tools.
+
+## Available Commands
+
+### install
+
+Install and convert a Claude plugin from GitHub or local path.
+
+```bash
+compound-plugin install <plugin-name>
+```
+
+The `install` command fetches the latest version of a plugin from GitHub (or uses a local path) and converts it to your target format. By default, it installs to OpenCode at `~/.config/opencode`.
+
+[View install documentation →](/commands/install)
+
+### convert
+
+Convert a local Claude Code plugin into another format.
+
+```bash
+compound-plugin convert <source-path> --to opencode
+```
+
+The `convert` command takes a local plugin directory and converts it to the specified target format. Unlike `install`, it expects a local path and defaults output to the current working directory.
+
+[View convert documentation →](/commands/convert)
+
+### sync
+
+Sync your Claude Code configuration (`~/.claude/`) to other AI coding tools.
+
+```bash
+compound-plugin sync --target all
+```
+
+The `sync` command reads your existing Claude Code config (skills, commands, MCP servers) and synchronizes it to other installed AI coding tools like OpenCode, Codex, Pi, etc.
+
+[View sync documentation →](/commands/sync)
+
+### list
+
+List available Claude plugins in the `plugins/` directory.
+
+```bash
+compound-plugin list
+```
+
+The `list` command scans the `plugins/` directory in your current working directory and displays all valid Claude plugins.
+
+[View list documentation →](/commands/list)
+
+## Quick Start
+
+Install a plugin from GitHub:
+
+```bash
+compound-plugin install compound-engineering
+```
+
+Convert a local plugin to multiple targets:
+
+```bash
+compound-plugin convert ./my-plugin --to opencode --also codex,pi
+```
+
+Sync your Claude config to all detected tools:
+
+```bash
+compound-plugin sync --target all
+```

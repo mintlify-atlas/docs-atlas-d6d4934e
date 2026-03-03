@@ -1,0 +1,323 @@
+---
+title: OpenCode
+description: Convert Claude Code plugins to OpenCode format with deep-merge config
+icon: code
+---
+
+OpenCode is the reference target platform. The converter creates agents, commands, skills, and MCP servers in OpenCode's native format with deep-merge configuration support.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to opencode
+```
+
+## Output Structure
+
+### Global Installation
+
+Writes to `~/.config/opencode/`:
+
+```
+~/.config/opencode/
+├── opencode.json          # Deep-merged config
+├── agents/
+│   └── *.md              # Agent files with frontmatter
+├── commands/
+│   └── *.md              # Command files (alternative to JSON)
+├── plugins/
+│   └── converted-hooks.ts # Hook handlers (if plugin has hooks)
+└── skills/
+    └── */                # Symlinked skill directories
+```
+
+### Project Installation
+
+Writes to `.opencode/` in your project:
+
+```
+.opencode/
+├── agents/
+├── commands/
+├── plugins/
+└── skills/
+opencode.json
+```
+
+<Info>
+Commands are written as individual `.md` files rather than entries in `opencode.json`. OpenCode resolves commands by filename at runtime.
+</Info>
+
+## Configuration Merging
+
+The converter uses **deep-merge** logic (ADR-002):
+
+- Existing user config **always wins** on conflict
+- Plugin MCP servers are added, but existing entries are preserved
+- Permissions and tools are merged with user preferences taking precedence
+- A backup is created before overwriting `opencode.json`
+
+```typescript
+// Example merged config
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "existing-server": { /* user config */ },
+    "plugin-server": { /* from plugin */ }
+  },
+  "permission": {
+    "read": "allow",
+    "write": { "*": "deny", "src/**": "allow" }
+  },
+  "tools": {
+    "bash": true,
+    "read": true
+  }
+}
+```
+
+## Conversion Details
+
+### Agents
+
+Converted to `.md` files with YAML frontmatter:
+
+```markdown
+---
+description: Plan complex features with detailed implementation steps
+mode: primary
+model: anthropic/claude-sonnet-4-5
+temperature: 0.2
+---
+
+You are a planning specialist agent...
+```
+
+**Frontmatter fields**:
+- `description`: Agent description
+- `mode`: `primary` or `subagent` (from conversion options)
+- `model`: Normalized model name with provider prefix
+- `temperature`: Inferred from agent name/description (optional)
+
+### Commands
+
+Converted to `.md` files in `~/.config/opencode/commands/`:
+
+```markdown
+---
+description: Turn feature ideas into detailed implementation plans
+model: anthropic/claude-sonnet-4-5
+---
+
+You are given a feature description. Create a detailed plan...
+```
+
+<Note>
+Commands with `disableModelInvocation: true` are skipped during conversion.
+</Note>
+
+### Skills
+
+Skill directories are **symlinked** (not copied) from the plugin:
+
+```bash
+ls -la ~/.config/opencode/skills/
+lrwxr-xr-x  1 user  staff  compound-engineering -> /path/to/plugin/skills/
+```
+
+This ensures changes in the plugin are immediately reflected in OpenCode.
+
+### MCP Servers
+
+Both stdio and remote MCP servers are supported:
+
+```json
+{
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem"],
+      "environment": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      },
+      "enabled": true
+    },
+    "remote-api": {
+      "type": "remote",
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_TOKEN}"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+### Hooks
+
+Claude hooks are converted to OpenCode plugin format:
+
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const ConvertedHooks: Plugin = async ({ $ }) => {
+  return {
+    "tool.execute.before": async (input) => {
+      if (input.tool === "bash") { await $`echo "Running bash command"` }
+    },
+    "tool.execute.after": async (input) => {
+      if (input?.error) {
+        await $`echo "Command failed"`
+      }
+    }
+  }
+}
+```
+
+**Hook event mapping**:
+
+| Claude Hook | OpenCode Event | Notes |
+|-------------|----------------|-------|
+| `PreToolUse` | `tool.execute.before` | Before tool execution |
+| `PostToolUse` | `tool.execute.after` | After successful execution |
+| `PostToolUseFailure` | `tool.execute.after` | When `input.error` exists |
+| `SessionStart` | `session.created` | New conversation |
+| `SessionEnd` | `session.deleted` | Conversation ended |
+| `PermissionRequest` | `permission.requested`, `permission.replied` | Permission prompts |
+
+<Warning>
+Unmapped Claude hook events are listed as comments in the generated plugin file but not converted.
+</Warning>
+
+## Tool Name Mapping
+
+Claude tool names map directly to OpenCode:
+
+| Claude | OpenCode |
+|--------|----------|
+| `Bash` | `bash` |
+| `Read` | `read` |
+| `Write` | `write` |
+| `Edit` | `edit` |
+| `Grep` | `grep` |
+| `Glob` | `glob` |
+| `WebFetch` | `webfetch` |
+| `Task` | `task` |
+
+## Path Rewriting
+
+Claude-specific paths are rewritten:
+
+- `~/.claude/` → `~/.config/opencode/`
+- `.claude/` → `.opencode/`
+
+## Permission Modes
+
+The converter supports three permission modes:
+
+### `none` (default)
+No permissions added to config.
+
+### `broad`
+All tools allowed:
+```json
+{
+  "permission": {
+    "read": "allow",
+    "write": "allow",
+    "bash": "allow"
+  },
+  "tools": {
+    "read": true,
+    "write": true,
+    "bash": true
+  }
+}
+```
+
+### `from-commands`
+Derived from `allowedTools` in commands:
+```json
+{
+  "permission": {
+    "read": "allow",
+    "write": {
+      "*": "deny",
+      "src/**": "allow"
+    }
+  }
+}
+```
+
+## Model Normalization
+
+Bare model aliases are converted to provider-prefixed names:
+
+| Input | Output |
+|-------|--------|
+| `haiku` | `anthropic/claude-haiku-4-5` |
+| `sonnet` | `anthropic/claude-sonnet-4-5` |
+| `opus` | `anthropic/claude-opus-4-6` |
+| `claude-3-5-sonnet` | `anthropic/claude-3-5-sonnet` |
+| `gpt-4` | `openai/gpt-4` |
+| `gemini-pro` | `google/gemini-pro` |
+
+<Warning>
+Bare aliases like `haiku` may become outdated. Update `CLAUDE_FAMILY_ALIASES` in the converter when new model generations are released.
+</Warning>
+
+## Temperature Inference
+
+When `inferTemperature: true`, the converter analyzes agent names and descriptions:
+
+| Pattern | Temperature |
+|---------|-------------|
+| review, audit, security, sentinel | 0.1 |
+| plan, architecture, analysis | 0.2 |
+| doc, readme, changelog | 0.3 |
+| brainstorm, creative, design | 0.6 |
+| Default | 0.3 |
+
+## Example Output
+
+**Input** (Claude plugin):
+```json
+{
+  "agents": [{
+    "name": "plan-specialist",
+    "description": "Planning agent",
+    "model": "sonnet",
+    "body": "You plan features..."
+  }]
+}
+```
+
+**Output** (`~/.config/opencode/agents/plan-specialist.md`):
+```markdown
+---
+description: Planning agent
+mode: primary
+model: anthropic/claude-sonnet-4-5
+temperature: 0.2
+---
+
+You plan features...
+```
+
+## Limitations
+
+- Commands with `disableModelInvocation: true` are not converted
+- Hook matchers with wildcards (`*`) apply to all tools in OpenCode
+- Unmapped hook events are commented out in the generated plugin
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="OpenCode Config Schema" icon="file-code" href="https://opencode.ai/config.json">
+    Official schema for opencode.json
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to OpenCode
+  </Card>
+</CardGroup>

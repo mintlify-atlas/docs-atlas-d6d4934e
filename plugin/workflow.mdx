@@ -1,0 +1,903 @@
+---
+title: Compound Engineering Workflow
+description: The Plan → Work → Review → Compound cycle that makes each unit of work easier
+---
+
+The compound engineering workflow is a systematic cycle designed to make each unit of work easier than the last. It's implemented through four core commands: `/ce:plan`, `/ce:work`, `/ce:review`, and `/ce:compound`.
+
+## The Four-Phase Cycle
+
+<Steps>
+  <Step title="Plan" icon="map">
+    Research existing patterns, design with acceptance criteria, create implementation roadmap
+  </Step>
+  <Step title="Work" icon="code">
+    Execute systematically, test continuously, follow existing patterns
+  </Step>
+  <Step title="Review" icon="magnifying-glass">
+    Multi-agent analysis for security, performance, architecture issues
+  </Step>
+  <Step title="Compound" icon="book">
+    Document solved problems for future reference and team knowledge
+  </Step>
+</Steps>
+
+After **Compound**, you return to **Plan** for the next feature - creating a continuous improvement loop.
+
+## Phase 1: Plan
+
+**Command**: `/ce:plan [feature description]`
+
+**Purpose**: Transform feature descriptions into well-structured plans following project conventions.
+
+**Time Investment**: 30-80% of feature time (seems high, but prevents building wrong thing)
+
+### Optional: Brainstorm First
+
+For complex or unclear features, start with brainstorming:
+
+```bash
+/ce:brainstorm "Add user authentication with OAuth"
+```
+
+The brainstorm command:
+- Asks clarifying questions one at a time
+- Explores 2-3 concrete approaches with pros/cons
+- Captures key decisions in `docs/brainstorms/`
+- Auto-links to `/ce:plan` when ready
+
+**When to brainstorm**:
+- Requirements are unclear or open-ended
+- Multiple approaches exist and you need to choose
+- Stakeholders need to align on direction
+- New territory without established patterns
+
+**When to skip**:
+- Requirements are clear and specific
+- Established patterns exist for this feature type
+- Scope is well-defined and constrained
+
+### The Planning Process
+
+<Steps>
+  <Step title="Idea Refinement">
+    If no brainstorm exists, `/ce:plan` asks clarifying questions:
+    - What's the purpose and who are the users?
+    - What are the constraints and success criteria?
+    - Are there specific requirements or edge cases?
+
+    If a recent brainstorm exists in `docs/brainstorms/`, it's automatically used.
+  </Step>
+
+  <Step title="Local Research (Always Runs)">
+    Parallel research to understand your project:
+    - `repo-research-analyst` - Existing patterns, CLAUDE.md guidance, technology familiarity
+    - `learnings-researcher` - Documented solutions in `docs/solutions/` that might apply
+
+    **Example findings**:
+    ```
+    Found existing auth pattern: app/services/authentication_service.rb:42
+    Found documented learning: docs/solutions/security-issues/oauth-csrf-prevention.md
+    CLAUDE.md guidance: Use Devise for authentication
+    ```
+  </Step>
+
+  <Step title="Research Decision">
+    Based on signals from refinement and local research, decides whether external research is valuable:
+
+    **Always research**: Security, payments, external APIs (cost of missing something is too high)
+
+    **Skip research**: Strong local context, user knows what they want, codebase has good patterns
+
+    **Research**: Uncertainty, unfamiliar territory, new technology
+
+    Announces decision: *"Your codebase has solid patterns for this. Proceeding without external research."*
+  </Step>
+
+  <Step title="External Research (Conditional)">
+    If external research is valuable, runs in parallel:
+    - `best-practices-researcher` - Industry best practices and examples
+    - `framework-docs-researcher` - Official documentation and patterns
+
+    Consolidates all findings with file paths, documentation URLs, and related issues.
+  </Step>
+
+  <Step title="SpecFlow Analysis">
+    Runs `spec-flow-analyzer` to validate the feature specification:
+    - Identifies gaps in user flows
+    - Surfaces edge cases and error scenarios
+    - Updates acceptance criteria based on findings
+  </Step>
+
+  <Step title="Choose Detail Level">
+    Select implementation detail level based on complexity:
+
+    **MINIMAL** - Quick issue (2-5 minutes to write):
+    - Problem/feature description
+    - Basic acceptance criteria
+    - Essential context only
+
+    **MORE** - Standard issue (10-15 minutes to write):
+    - Detailed background and motivation
+    - Technical considerations
+    - Success metrics, dependencies, risks
+    - Basic implementation suggestions
+
+    **A LOT** - Comprehensive issue (30+ minutes to write):
+    - Executive summary and detailed analysis
+    - Implementation phases with effort estimates
+    - Alternative approaches considered
+    - System-wide impact analysis
+    - Risk mitigation strategies
+    - Documentation plan
+  </Step>
+
+  <Step title="Write Plan File">
+    Creates structured markdown file in `docs/plans/`:
+
+    ```
+    docs/plans/2026-03-03-feat-user-authentication-plan.md
+    ```
+
+    **Filename format**: `YYYY-MM-DD-<type>-<descriptive-name>-plan.md`
+
+    **Content includes**:
+    - YAML frontmatter (title, type, status, date, origin)
+    - Problem statement or feature description
+    - Research findings with file references
+    - Acceptance criteria
+    - Implementation details (level-dependent)
+    - Sources and references
+  </Step>
+</Steps>
+
+### After Planning
+
+You'll see options:
+
+1. **Open plan in editor** - Review the generated plan
+2. **Run `/deepen-plan`** - Enhance each section with parallel research agents
+3. **Review and refine** - Improve through structured self-review
+4. **Share to Proof** - Collaborative review and sharing
+5. **Start `/ce:work`** - Begin implementation
+6. **Create Issue** - Create in GitHub/Linear
+
+### Key Planning Insights
+
+**Research pays off**:
+```
+Without research: 4 hours building → 2 hours refactoring (found better pattern)
+With research: 30 min research → 2 hours building (using right pattern)
+
+Savings: 3.5 hours
+```
+
+**Plans as living documents**:
+- Created with `status: active` in frontmatter
+- Checkboxes marked off as `/ce:work` completes tasks
+- Updated to `status: completed` when shipped
+- Searchable reference for similar future features
+
+## Phase 2: Work
+
+**Command**: `/ce:work [plan file path]`
+
+**Purpose**: Execute work plans efficiently while maintaining quality and finishing features.
+
+**Time Investment**: 20% of feature time (sounds small, but clear plan makes execution fast)
+
+### The Execution Process
+
+<Steps>
+  <Step title="Quick Start">
+    1. **Read Plan and Clarify** - Review the plan, ask any clarifying questions now
+    2. **Setup Environment** - Create feature branch or worktree
+    3. **Create Todo List** - Use TodoWrite to break plan into actionable tasks
+
+    **Branch options**:
+    ```bash
+    # Option A: Create new branch
+    git checkout -b feat/user-authentication
+
+    # Option B: Use worktree (recommended for parallel work)
+    skill: git-worktree
+
+    # Option C: Continue on current branch (with confirmation)
+    ```
+  </Step>
+
+  <Step title="Execute Tasks">
+    For each task in priority order:
+
+    1. Mark task as `in_progress` in TodoWrite
+    2. Read referenced files from the plan
+    3. Look for similar patterns in codebase
+    4. Implement following existing conventions
+    5. Write tests for new functionality
+    6. Run **System-Wide Test Check** (see below)
+    7. Run tests after changes
+    8. Mark task as `completed` in TodoWrite
+    9. Mark checkbox in plan file (`[ ]` → `[x]`)
+    10. Evaluate for incremental commit
+
+    **Critical: The plan document is updated as you work** - it shows live progress.
+  </Step>
+
+  <Step title="System-Wide Test Check">
+    Before marking a task done, ask:
+
+    | Question | What to do |
+    |----------|------------|
+    | **What fires when this runs?** | Trace callbacks, middleware, observers two levels deep |
+    | **Do tests exercise the real chain?** | Write integration test with real objects (not all mocks) |
+    | **Can failure leave orphaned state?** | Test failure path, verify cleanup or idempotent retry |
+    | **What other interfaces expose this?** | Grep for method in related classes, add parity now |
+    | **Do error strategies align across layers?** | Verify rescue list matches what lower layer raises |
+
+    **When to skip**: Leaf-node changes (new helper, new view partial) with no callbacks or state persistence.
+
+    **When critical**: Changes touching models with callbacks, error handling with retry, or functionality in multiple interfaces.
+  </Step>
+
+  <Step title="Incremental Commits">
+    After completing each logical unit, evaluate whether to commit:
+
+    **Commit when**:
+    - Logical unit complete (model, service, component)
+    - Tests pass + meaningful progress
+    - About to switch contexts (backend → frontend)
+    - About to attempt risky changes
+
+    **Don't commit when**:
+    - Small part of larger unit
+    - Tests failing
+    - Purely scaffolding with no behavior
+    - Would need "WIP" commit message
+
+    **Heuristic**: "Can I write a commit message that describes a complete, valuable change?"
+
+    ```bash
+    # Stage only files for this logical unit
+    git add app/models/user.rb app/services/authentication_service.rb
+
+    # Commit with conventional message
+    git commit -m "feat(auth): add user authentication service"
+    ```
+  </Step>
+
+  <Step title="Quality Check">
+    Before creating PR:
+
+    1. Run full test suite
+    2. Run linting (use `lint` agent)
+    3. Consider reviewer agents for complex changes (see settings)
+    4. Verify all TodoWrite tasks completed
+    5. Verify all plan checkboxes marked
+  </Step>
+
+  <Step title="Ship It">
+    1. **Create final commit** with attribution:
+       ```bash
+       git commit -m "feat(auth): add OAuth user authentication
+
+       Implements user authentication with Google OAuth.
+
+       🤖 Generated with Claude Code
+
+       Co-Authored-By: Claude <noreply@anthropic.com>"
+       ```
+
+    2. **Capture screenshots** (for UI changes):
+       ```bash
+       # Start dev server
+       bin/dev
+
+       # Capture with agent-browser
+       agent-browser open http://localhost:3000/login
+       agent-browser screenshot login-page.png
+
+       # Upload with imgup skill
+       skill: imgup
+       imgup -h pixhost login-page.png
+       ```
+
+    3. **Create PR** with comprehensive description:
+       ```bash
+       gh pr create --title "feat: Add OAuth user authentication" --body "..."
+       ```
+
+       PR includes:
+       - Summary of what was built and why
+       - Testing performed
+       - Post-Deploy Monitoring & Validation plan
+       - Before/after screenshots (for UI)
+       - Compound Engineered badge
+
+    4. **Update plan status**:
+       ```yaml
+       status: active  →  status: completed
+       ```
+  </Step>
+</Steps>
+
+### Key Work Insights
+
+**Test continuously**:
+```
+Test at end: 2 hours coding → 1 hour debugging 15 test failures
+Test continuously: 2 hours coding with tests after each change → 0 failures
+```
+
+**Follow the plan**:
+```
+Ignore plan: 3 hours building → realize wrong approach → 2 hours refactoring
+Follow plan: Reference similar code from plan → 2 hours building → ship
+```
+
+**Incremental commits**:
+```
+One big commit: Hard to review, hard to debug, hard to revert
+Incremental commits: Easy to review, easy to bisect, easy to revert specific changes
+```
+
+## Phase 3: Review
+
+**Command**: `/ce:review [PR number or branch]`
+
+**Purpose**: Perform exhaustive code reviews using multi-agent analysis.
+
+**Time Investment**: 15-45 minutes per PR (catches issues that would cost hours in production)
+
+### The Review Process
+
+<Steps>
+  <Step title="Determine Target & Setup">
+    Identify what to review:
+    - PR number: `/ce:review 123`
+    - GitHub URL: `/ce:review https://github.com/org/repo/pull/123`
+    - Current branch: `/ce:review`
+
+    Fetches PR metadata and sets up code for analysis.
+  </Step>
+
+  <Step title="Load Review Agents">
+    Reads `compound-engineering.local.md` in project root for configured review agents.
+
+    If no settings file exists, invokes the `setup` skill to create one:
+    - Auto-detects project type (Rails, Python, TypeScript)
+    - Offers "Auto-configure" or "Customize" paths
+    - Writes settings file with appropriate agents
+
+    **Example settings**:
+    ```yaml
+    ---
+    review_agents:
+      - kieran-rails-reviewer
+      - security-sentinel
+      - performance-oracle
+      - architecture-strategist
+    ---
+    ```
+  </Step>
+
+  <Step title="Parallel Agent Review">
+    Runs all configured agents in parallel:
+
+    **Always run**:
+    - `agent-native-reviewer` - Verify new features are agent-accessible
+    - `learnings-researcher` - Search docs/solutions/ for related past issues
+    - Configured agents from settings file
+
+    **Conditional agents** (when PR contains migrations):
+    - `schema-drift-detector` - Detects unrelated schema.rb changes
+    - `data-migration-expert` - Validates ID mappings match production
+    - `deployment-verification-agent` - Creates Go/No-Go checklist
+
+    **Example parallel execution**:
+    ```
+    Running 7 agents in parallel:
+    ✓ kieran-rails-reviewer (12 findings)
+    ✓ security-sentinel (3 findings)
+    ✓ performance-oracle (5 findings)
+    ✓ architecture-strategist (2 findings)
+    ✓ agent-native-reviewer (1 finding)
+    ✓ learnings-researcher (found 2 related solutions)
+    ✓ code-simplicity-reviewer (4 findings)
+    ```
+  </Step>
+
+  <Step title="Ultra-Thinking Deep Dive">
+    Multiple perspectives on the code:
+
+    **Stakeholder Perspective Analysis**:
+    - Developer: Is this easy to understand and modify?
+    - Operations: How do I deploy and troubleshoot this?
+    - End User: Is the feature intuitive?
+    - Security: What's the attack surface?
+    - Business: What's the ROI and compliance impact?
+
+    **Scenario Exploration**:
+    - Happy path, invalid inputs, boundary conditions
+    - Concurrent access, scale testing, network issues
+    - Resource exhaustion, security attacks
+    - Data corruption, cascading failures
+  </Step>
+
+  <Step title="Findings Synthesis">
+    Consolidates all agent reports:
+    1. Collect findings from all parallel agents
+    2. Surface learnings-researcher results (known patterns)
+    3. Categorize by type (security, performance, architecture)
+    4. Assign severity: 🔴 P1 (CRITICAL), 🟡 P2 (IMPORTANT), 🔵 P3 (NICE-TO-HAVE)
+    5. Remove duplicates
+    6. Estimate effort (Small/Medium/Large)
+  </Step>
+
+  <Step title="Create Todo Files">
+    Uses the `file-todos` skill to create structured todo files for ALL findings:
+
+    **File naming**:
+    ```
+    001-pending-p1-path-traversal-vulnerability.md
+    002-pending-p1-api-response-validation.md
+    003-pending-p2-n-plus-one-query.md
+    004-pending-p3-unused-parameter.md
+    ```
+
+    **Each todo includes**:
+    - YAML frontmatter (status, priority, tags, dependencies)
+    - Problem Statement
+    - Findings from agents with evidence/location
+    - Proposed Solutions (2-3 options with pros/cons/effort/risk)
+    - Technical Details (affected files, components)
+    - Acceptance Criteria
+    - Work Log
+    - Resources (PR link, documentation, similar patterns)
+
+    **For large PRs** (15+ findings), launches sub-agents in parallel to create todos faster.
+  </Step>
+
+  <Step title="Summary Report">
+    Presents comprehensive review summary:
+
+    ```
+    ✅ Code Review Complete
+
+    Review Target: PR #123 - Add OAuth authentication
+    Branch: feat/user-authentication
+
+    Findings Summary:
+    - Total Findings: 12
+    - 🔴 CRITICAL (P1): 2 - BLOCKS MERGE
+    - 🟡 IMPORTANT (P2): 5 - Should Fix
+    - 🔵 NICE-TO-HAVE (P3): 5 - Enhancements
+
+    Created Todo Files:
+    P1 - Critical:
+      - 001-pending-p1-oauth-csrf-vulnerability.md
+      - 002-pending-p1-missing-rate-limiting.md
+
+    P2 - Important:
+      - 003-pending-p2-session-token-expiry.md
+      ...
+    ```
+
+    **Next Steps**:
+    1. Address P1 findings (blocks merge)
+    2. Triage all todos with `/triage`
+    3. Work on approved todos with `/resolve_todo_parallel`
+  </Step>
+</Steps>
+
+### Optional: End-to-End Testing
+
+After review summary, offers browser/iOS testing:
+
+**For web projects**:
+```bash
+/test-browser  # Test affected pages with agent-browser
+```
+
+**For iOS projects**:
+```bash
+/xcode-test  # Build and test on simulator
+```
+
+### Key Review Insights
+
+**Multi-agent parallel review is thorough**:
+```
+Single reviewer: Catches 60% of issues, 30 min review
+7 parallel agents: Catch 95% of issues, 15 min wall time
+```
+
+**P1 findings block merge**:
+```
+Ignore P1: Ship → production incident → 3 hours emergency fix
+Fix P1: 20 minutes to fix before merge → ship cleanly
+```
+
+**Documented learnings surface automatically**:
+```
+learnings-researcher found: docs/solutions/security-issues/oauth-csrf-prevention.md
+Result: Don't repeat past mistake, apply known solution
+```
+
+## Phase 4: Compound
+
+**Command**: `/ce:compound [optional context]`
+
+**Purpose**: Document a recently solved problem to compound your team's knowledge.
+
+**Time Investment**: 5-10 minutes (saves 30 minutes next occurrence)
+
+### The Compounding Process
+
+<Steps>
+  <Step title="Parallel Research Phase">
+    Launches 5 subagents in parallel (they return text data, don't write files):
+
+    1. **Context Analyzer** - Extracts conversation history, identifies problem type/component/symptoms
+    2. **Solution Extractor** - Analyzes investigation steps, identifies root cause, extracts working solution
+    3. **Related Docs Finder** - Searches docs/solutions/ for related documentation
+    4. **Prevention Strategist** - Develops prevention strategies and test cases
+    5. **Category Classifier** - Determines optimal category and filename
+
+    **Example parallel execution**:
+    ```
+    Launching 5 subagents in parallel:
+    ✓ Context Analyzer: Identified performance_issue in brief_system
+    ✓ Solution Extractor: 3 code fixes extracted
+    ✓ Related Docs Finder: 2 related issues
+    ✓ Prevention Strategist: Prevention strategies + test suggestions
+    ✓ Category Classifier: performance-issues/n-plus-one-brief-generation.md
+    ```
+  </Step>
+
+  <Step title="Assembly & Write Phase">
+    After all subagents return results:
+
+    1. Collect all text results
+    2. Assemble complete markdown file
+    3. Validate YAML frontmatter against schema
+    4. Create directory if needed: `mkdir -p docs/solutions/[category]/`
+    5. Write the SINGLE final file: `docs/solutions/[category]/[filename].md`
+
+    **Only one file is written** - the final documentation.
+  </Step>
+
+  <Step title="Optional Enhancement">
+    Based on problem type, optionally invokes specialized agents to review the documentation:
+
+    - `performance_issue` → `performance-oracle`
+    - `security_issue` → `security-sentinel`
+    - `database_issue` → `data-integrity-guardian`
+    - Code-heavy issues → `kieran-rails-reviewer` + `code-simplicity-reviewer`
+
+    Agents provide feedback to improve the documentation quality.
+  </Step>
+</Steps>
+
+### What Gets Captured
+
+**Organized documentation in `docs/solutions/[category]/`**:
+
+```markdown
+---
+title: Fix N+1 Query in Brief Generation
+type: performance_issue
+component: brief_system
+date: 2026-03-03
+tags: [rails, activerecord, performance]
+---
+
+## Problem Symptom
+
+Brief generation endpoint taking 3000ms (should be <500ms).
+Rails logs show 1 query + 50 queries pattern.
+
+## Investigation Steps Tried
+
+- Checked database indexes (all present)
+- Tried query caching (didn't help)
+- Profiled with rack-mini-profiler (found N+1)
+
+## Root Cause
+
+Each brief iteration loads associated `brief_items` individually:
+```ruby
+briefs.each { |b| b.brief_items.map(&:title) }
+```
+
+## Working Solution
+
+Preload the association:
+```ruby
+briefs.includes(:brief_items).each { |b| b.brief_items.map(&:title) }
+```
+
+Result: 3000ms → 120ms (25x faster)
+
+## Prevention Strategies
+
+- Add Bullet gem to development environment
+- Include N+1 check in code review checklist
+- Add performance test for brief generation endpoint
+
+## Related Issues
+
+- Similar pattern in email_processor: docs/solutions/performance-issues/n-plus-one-email-processor.md
+- Rails includes guide: https://guides.rubyonrails.org/active_record_querying.html#eager-loading
+```
+
+### Categories Auto-Detected
+
+- `build-errors/` - Compilation and build failures
+- `test-failures/` - Test suite issues
+- `runtime-errors/` - Production runtime errors
+- `performance-issues/` - Slow queries, memory leaks
+- `database-issues/` - Migrations, data integrity
+- `security-issues/` - Vulnerabilities, exploits
+- `ui-bugs/` - Visual and interaction issues
+- `integration-issues/` - Third-party API problems
+- `logic-errors/` - Business logic bugs
+
+### The Compounding Effect
+
+**First occurrence**:
+```
+30 min research + 15 min implementation + 5 min /ce:compound
+= 50 minutes total
+```
+
+**Second occurrence**:
+```
+2 min lookup in docs/solutions/ + 3 min implementation
+= 5 minutes total (90% faster)
+```
+
+**Third occurrence** (by different developer):
+```
+2 min lookup + 3 min implementation
+= 5 minutes total (knowledge persists across team)
+```
+
+**Compounding**: The 5-minute documentation investment saves 45 minutes per future occurrence.
+
+## The Complete Cycle
+
+Here's how a feature flows through all four phases:
+
+```bash
+# Phase 1: Plan (30 min)
+/ce:plan "Add OAuth user authentication"
+# → Creates docs/plans/2026-03-03-feat-oauth-authentication-plan.md
+# → Research finds: existing auth pattern, documented OAuth CSRF solution
+# → Plan includes: acceptance criteria, system-wide impact analysis
+
+# Phase 2: Work (2 hours)
+/ce:work docs/plans/2026-03-03-feat-oauth-authentication-plan.md
+# → Creates feature branch
+# → Implements following existing patterns from plan
+# → Tests continuously during work
+# → Marks plan checkboxes as tasks complete
+# → Creates PR with screenshots and monitoring plan
+
+# Phase 3: Review (20 min)
+/ce:review 123
+# → 7 agents review in parallel
+# → Creates 12 finding todos (2 P1, 5 P2, 5 P3)
+# → P1: OAuth CSRF vulnerability, missing rate limiting
+# → Fix P1 issues before merge
+
+# Phase 4: Compound (5 min)
+/ce:compound
+# → Documents OAuth CSRF fix in docs/solutions/security-issues/
+# → Next developer implementing OAuth saves 30 min research
+```
+
+**Total time**: 2h 55min for complete, reviewed, documented feature
+
+**Next similar feature**: 1h 30min (reuse patterns, reference docs, skip repeated research)
+
+**Third similar feature**: 45min (patterns are second nature)
+
+## Why This Workflow Works
+
+The workflow embodies the compound engineering philosophy:
+
+### 1. Plan Prevents Rework
+
+```
+No plan: 4 hours building wrong thing → 2 hours refactoring
+With plan: 30 min research → 2 hours building right thing
+
+Savings: 3.5 hours
+```
+
+### 2. Review Catches Issues Early
+
+```
+No review: Ship → production bug → 3 hours emergency fix
+With review: 20 min review → catch bug → 15 min fix → ship cleanly
+
+Savings: 2 hours 25 min + production incident
+```
+
+### 3. Documentation Compounds
+
+```
+No docs: 30 min research per occurrence × 5 occurrences = 2.5 hours
+With docs: 5 min document once + 2 min lookup × 4 occurrences = 13 min
+
+Savings: 2 hours 17 min (and accelerating)
+```
+
+### 4. Knowledge Persists
+
+```
+Traditional: Knowledge in developer's head → lost when they leave
+Compound: Knowledge in docs/solutions/ → persists forever
+
+Result: New developers productive in week 2 instead of week 4
+```
+
+## Workflow Tips
+
+<AccordionGroup>
+  <Accordion title="When to use each detail level in planning">
+    **MINIMAL**: Simple bugs, small improvements, clear features
+    - Bug: "Fix email validation regex"
+    - Feature: "Add sort button to table"
+    - Time: 2-5 minutes to write plan
+
+    **MORE**: Most features, complex bugs, team collaboration
+    - Feature: "Add OAuth authentication"
+    - Bug: "Fix race condition in payment processing"
+    - Time: 10-15 minutes to write plan
+
+    **A LOT**: Major features, architectural changes, complex integrations
+    - Feature: "Implement real-time collaboration"
+    - Migration: "Move from monolith to microservices"
+    - Time: 30+ minutes to write plan
+  </Accordion>
+
+  <Accordion title="When to use reviewer agents">
+    **Always use** (configured in settings):
+    - Your project's language reviewer (kieran-rails-reviewer, etc.)
+    - agent-native-reviewer (for agent-accessible features)
+    - learnings-researcher (searches past solutions)
+
+    **Use for complex changes**:
+    - security-sentinel (auth, permissions, data access)
+    - performance-oracle (performance-critical paths)
+    - architecture-strategist (large refactors)
+    - data-integrity-guardian (migrations, data changes)
+
+    **Don't overuse**:
+    - Simple changes: tests + linting is sufficient
+    - Save thorough review for complex/risky work
+  </Accordion>
+
+  <Accordion title="How to configure review agents">
+    Run the setup skill:
+
+    ```bash
+    skill: setup
+    ```
+
+    Choose "Auto-configure" for quick setup or "Customize" for fine control.
+
+    Creates `compound-engineering.local.md` in project root:
+
+    ```yaml
+    ---
+    review_agents:
+      - kieran-rails-reviewer
+      - security-sentinel
+      - performance-oracle
+    ---
+
+    ## Review Context
+
+    Focus on:
+    - Rails 7.1+ patterns
+    - Security for payment processing
+    - Performance for real-time features
+    ```
+
+    The markdown body provides context to all review agents.
+  </Accordion>
+
+  <Accordion title="When to brainstorm vs. plan directly">
+    **Brainstorm first**:
+    - "Should we use OAuth or build custom auth?"
+    - "How should we implement real-time updates?"
+    - "What's the right architecture for this?"
+    - Multiple valid approaches exist
+
+    **Plan directly**:
+    - "Fix bug in email validation"
+    - "Add sort button to user table"
+    - "Implement OAuth following existing pattern"
+    - One clear approach
+  </Accordion>
+
+  <Accordion title="How to handle P1 findings">
+    **P1 (CRITICAL) blocks merge**. Always fix before shipping:
+
+    1. Read the todo file: `001-pending-p1-vulnerability.md`
+    2. Review Proposed Solutions (usually 2-3 options)
+    3. Implement the recommended fix
+    4. Test the fix
+    5. Update todo Work Log
+    6. Rename: `001-pending-p1-*.md` → `001-complete-p1-*.md`
+    7. Push fix to PR
+    8. Re-run `/ce:review` to verify
+
+    **If you disagree with P1 severity**: Document reasoning in todo Work Log and discuss with team. Don't silently ignore.
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Workflows
+
+### Full Autonomous Workflow
+
+```bash
+/lfg "Add OAuth authentication"
+```
+
+Runs the complete workflow automatically:
+1. `/ce:plan` - Create plan
+2. `/deepen-plan` - Enhance with parallel research
+3. `/ce:work` - Implement the feature
+4. `/ce:review` - Multi-agent review
+5. `resolve todos` - Fix findings
+6. `/test-browser` - End-to-end testing
+7. `/feature-video` - Record demo
+
+**Use for**: Well-defined features where you want autonomous execution.
+
+### Swarm Mode Workflow
+
+```bash
+/slfg "Add OAuth authentication"
+```
+
+Same as `/lfg` but uses swarm mode for maximum parallelism:
+- Multiple agents work simultaneously
+- Coordinate through shared task list
+- Faster completion for complex features
+
+**Use for**: Large features with many independent workstreams.
+
+### Deepen Plan
+
+```bash
+/deepen-plan docs/plans/2026-03-03-feat-oauth-plan.md
+```
+
+Enhances existing plan with parallel research agents:
+- Best practices for each major section
+- Performance optimizations
+- UI/UX improvements (if applicable)
+- Quality enhancements and edge cases
+
+**Use after**: `/ce:plan` for maximum depth and grounding.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Try the Workflow" icon="play" href="/quickstart">
+    Follow the quickstart to run your first workflow cycle
+  </Card>
+  <Card title="Understand the Philosophy" icon="lightbulb" href="/plugin/philosophy">
+    Learn why each unit of work should make the next easier
+  </Card>
+  <Card title="View All Commands" icon="terminal" href="/plugin/commands">
+    Explore the complete ce:* command reference
+  </Card>
+  <Card title="Configure Review Agents" icon="gear" href="/plugin/agents">
+    Set up review agents for your project
+  </Card>
+</CardGroup>

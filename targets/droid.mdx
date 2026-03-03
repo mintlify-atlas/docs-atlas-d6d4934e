@@ -1,0 +1,226 @@
+---
+title: Factory Droid
+description: Convert Claude Code plugins to Factory Droid commands and droids
+icon: robot
+---
+
+The Factory Droid converter creates commands and droids with tool name mapping and namespace stripping.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to droid
+```
+
+## Output Structure
+
+Writes to `~/.factory/`:
+
+```
+~/.factory/
+├── commands/
+│   └── *.md              # Flattened commands
+├── droids/
+│   └── *.md              # Agents as droids
+└── skills/
+    └── */                # Pass-through skills
+```
+
+<Info>
+Commands are **flattened** — namespace prefixes like `workflows:` are stripped. `workflows:plan` becomes `plan.md`.
+</Info>
+
+## Conversion Details
+
+### Commands
+
+Commands are converted to `.md` files with frontmatter:
+
+```markdown
+---
+description: Turn feature ideas into detailed plans
+argument-hint: <feature description>
+disable-model-invocation: false
+---
+
+You are a planning specialist. Task plan-specialist: analyze the feature.
+```
+
+**Namespace flattening**:
+```
+workflows:plan → plan.md
+ce:work → work.md
+my-namespace:command → command.md
+```
+
+### Agents → Droids
+
+Agents are converted to droids:
+
+```markdown
+---
+name: plan-specialist
+description: Planning agent for complex features
+model: inherit
+tools:
+  - Read
+  - Execute
+  - Task
+---
+
+## Capabilities
+- Break down features
+- Create implementation plans
+
+You are a planning specialist...
+```
+
+**Tool inference**:
+The converter scans agent content for tool mentions and adds them to the `tools` array:
+
+```typescript
+// If agent body mentions "read", "bash", "task"
+tools: ["Read", "Execute", "Task"]
+```
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Task repo-research-analyst: feature_description
+```
+
+**Slash commands**:
+```diff
+- Run /workflows:plan to create a plan
++ Run /plan to create a plan
+```
+
+**Agent references**:
+```diff
+- Consult @agent-reviewer
++ Consult the agent-reviewer droid
+```
+
+## Tool Name Mapping
+
+Claude tool names are mapped to Factory Droid tools:
+
+| Claude | Droid | Notes |
+|--------|-------|-------|
+| `Bash` | `Execute` | Shell commands |
+| `Read` | `Read` | Read files |
+| `Write` | `Create` | Create/write files |
+| `Edit` | `Edit` | Edit files |
+| `MultiEdit` | `Edit` | Batch edits |
+| `Grep` | `Grep` | Search content |
+| `Glob` | `Glob` | Find files |
+| `List` / `LS` | `LS` | List directory |
+| `WebFetch` | `FetchUrl` | HTTP requests |
+| `WebSearch` | `WebSearch` | Web search |
+| `Task` | `Task` | Subagent calls |
+| `TodoWrite` | `TodoWrite` | Task tracking |
+| `TodoRead` | `TodoWrite` | Read tasks |
+| `Question` | `AskUser` | User prompts |
+
+<Warning>
+Only tools in the valid Droid tool set are included in the `tools` array. Unmapped tools are ignored.
+</Warning>
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output |
+|-------|--------|
+| `workflows:plan` | `plan` |
+| `Plan Review` | `plan-review` |
+| `my/command` | `my-command` |
+| `UPPERCASE` | `uppercase` |
+
+Rules:
+- Lowercase only
+- Colons, slashes, spaces → hyphens
+- Special characters removed
+- Multiple hyphens collapsed
+
+## Example Output
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create implementation plan",
+  "argumentHint": "<feature description>",
+  "body": "You are a planning agent. Task repo-research-analyst(research the feature)."
+}
+```
+
+**Output** (`~/.factory/commands/plan.md`):
+```markdown
+---
+description: Create implementation plan
+argument-hint: <feature description>
+---
+
+You are a planning agent. Task repo-research-analyst: research the feature.
+```
+
+**Input** (Claude agent):
+```json
+{
+  "name": "code-review-agent",
+  "description": "Review code for issues",
+  "body": "You use the Read tool to inspect files and the Task tool to delegate analysis."
+}
+```
+
+**Output** (`~/.factory/droids/code-review-agent.md`):
+```markdown
+---
+name: code-review-agent
+description: Review code for issues
+model: inherit
+tools:
+  - Read
+  - Task
+---
+
+You use the Read tool to inspect files and the Task tool to delegate analysis.
+```
+
+## Limitations
+
+- **No MCP support**: Factory Droid does not have MCP server configuration
+- **No hooks**: Factory Droid does not support hooks
+- **Tool inference only**: Tools are inferred from content, not explicitly configured
+- **Namespace stripping**: Commands lose their namespace prefix
+
+<Warning>
+If multiple commands have the same name after stripping namespaces (e.g., `workflows:plan` and `tasks:plan`), the last one will overwrite earlier ones.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to Droid:
+
+```bash
+bunx @every-env/compound-plugin sync --target droid
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (as symlinks)
+- Personal commands from `~/.claude/commands/` (as droid commands)
+- MCP servers are **not synced** (Droid has no MCP support)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Factory Droid Documentation" icon="robot" href="https://factory.ai">
+    Official Factory Droid documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Droid
+  </Card>
+</CardGroup>

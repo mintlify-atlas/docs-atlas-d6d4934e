@@ -1,0 +1,269 @@
+---
+title: Compound Engineering Plugin
+description: AI-powered development tools that get smarter with every use
+---
+
+AI-powered development tools that get smarter with every use. Make each unit of engineering work easier than the last.
+
+## What's Included
+
+The compound-engineering plugin is bundled with Claude Code and provides a comprehensive suite of AI-powered development tools:
+
+| Component | Count | Description |
+|-----------|-------|-------------|
+| **Agents** | 29 | Specialized reviewers and researchers |
+| **Commands** | 22 | Workflow automation and utilities |
+| **Skills** | 20 | Expert guidance and patterns |
+| **MCP Servers** | 1 | Framework documentation lookup |
+
+<CardGroup cols={2}>
+  <Card title="Agents" icon="robot" href="/plugin/agents">
+    29 specialized agents for code review, research, design, and workflow automation
+  </Card>
+  <Card title="Commands" icon="terminal" href="/plugin/commands">
+    22 slash commands including the core ce:* workflow commands
+  </Card>
+  <Card title="Skills" icon="lightbulb" href="/plugin/skills">
+    20 expert skills for architecture, development tools, and content workflow
+  </Card>
+  <Card title="MCP Servers" icon="server" href="/plugin/mcp-servers">
+    Context7 server for framework documentation lookup across 100+ frameworks
+  </Card>
+</CardGroup>
+
+## Core Workflow
+
+The plugin centers around a simple workflow cycle using the `ce:*` commands:
+
+<Steps>
+  <Step title="Plan">
+    Use `/ce:plan` to transform feature descriptions into well-structured plans
+  </Step>
+  <Step title="Work">
+    Use `/ce:work` to execute plans systematically while maintaining quality
+  </Step>
+  <Step title="Review">
+    Use `/ce:review` to perform exhaustive multi-agent code reviews
+  </Step>
+  <Step title="Compound">
+    Use `/ce:compound` to document solved problems for future reference
+  </Step>
+</Steps>
+
+See the [Workflow Guide](/plugin/workflow) for detailed documentation.
+
+## Installation
+
+The compound-engineering plugin is **bundled with Claude Code** and enabled by default. No installation required.
+
+<Tabs>
+  <Tab title="Claude Code">
+    The plugin is bundled and enabled by default:
+
+    ```bash
+    # Already installed - just start using it
+    /ce:plan
+    ```
+
+    To install manually:
+
+    ```bash
+    claude /plugin install compound-engineering
+    ```
+  </Tab>
+  
+  <Tab title="Cursor">
+    Convert and install for Cursor:
+
+    ```bash
+    bunx @every-env/compound-plugin install compound-engineering --to cursor
+    ```
+  </Tab>
+  
+  <Tab title="OpenCode">
+    Convert and install for OpenCode:
+
+    ```bash
+    bunx @every-env/compound-plugin install compound-engineering --to opencode
+    ```
+
+    Output location: `~/.config/opencode/`
+  </Tab>
+  
+  <Tab title="Other IDEs">
+    The plugin supports conversion to multiple formats:
+
+    ```bash
+    # Windsurf
+    bunx @every-env/compound-plugin install --to windsurf
+
+    # Factory Droid
+    bunx @every-env/compound-plugin install --to droid
+
+    # Gemini CLI
+    bunx @every-env/compound-plugin install --to gemini
+
+    # Install to all detected tools
+    bunx @every-env/compound-plugin install --to all
+    ```
+  </Tab>
+</Tabs>
+
+## Philosophy
+
+The plugin embodies **compound engineering** - a development philosophy where each unit of work makes future work easier, not harder.
+
+Traditional development accumulates technical debt:
+```
+Work → Ship → Repeat → Debt accumulates → Slows down
+```
+
+Compound engineering creates compounding knowledge:
+```
+Work → Document → Reuse → Knowledge compounds → Speeds up
+```
+
+**Example**: The first time you solve an N+1 query issue takes 30 minutes of research. Document it with `/ce:compound`, and the next occurrence takes 2 minutes.
+
+Read more in the [Philosophy Guide](/plugin/philosophy).
+
+## Quick Start
+
+Get started with the core workflow:
+
+<Steps>
+  <Step title="Explore an idea">
+    ```bash
+    /ce:brainstorm "Add user authentication"
+    ```
+    Collaborative dialogue to refine requirements and explore approaches.
+  </Step>
+
+  <Step title="Create a plan">
+    ```bash
+    /ce:plan "Add user authentication"
+    ```
+    Generates a structured plan with research, acceptance criteria, and implementation details.
+  </Step>
+
+  <Step title="Execute the work">
+    ```bash
+    /ce:work docs/plans/2026-03-03-feat-user-authentication-plan.md
+    ```
+    Systematically implements the plan with continuous testing and quality checks.
+  </Step>
+
+  <Step title="Review the code">
+    ```bash
+    /ce:review 123
+    ```
+    Multi-agent code review with security, performance, and architecture analysis.
+  </Step>
+
+  <Step title="Compound the knowledge">
+    ```bash
+    /ce:compound
+    ```
+    Documents the solution for future reference in `docs/solutions/`.
+  </Step>
+</Steps>
+
+## Component Categories
+
+### Agents
+
+Specialized agents organized by function:
+
+- **Review (15)** - Code review agents (security, performance, architecture, Rails, Python, TypeScript)
+- **Research (5)** - Research agents (best practices, framework docs, git history, learnings)
+- **Design (3)** - Design implementation and iteration agents
+- **Workflow (5)** - Bug reproduction, linting, PR comments, spec analysis
+- **Docs (1)** - README generation for Ruby gems
+
+[View all agents →](/plugin/agents)
+
+### Commands
+
+Two types of commands:
+
+**Workflow Commands** (`ce:*` prefix):
+- `/ce:brainstorm` - Explore requirements and approaches
+- `/ce:plan` - Create implementation plans
+- `/ce:work` - Execute work systematically
+- `/ce:review` - Run comprehensive code reviews
+- `/ce:compound` - Document solved problems
+
+**Utility Commands**:
+- `/lfg` - Full autonomous workflow
+- `/slfg` - Autonomous workflow with swarm mode
+- `/deepen-plan` - Enhance plans with parallel research
+- `/changelog` - Create changelogs for recent merges
+- And 13 more...
+
+[View all commands →](/plugin/commands)
+
+### Skills
+
+Expert guidance organized by category:
+
+- **Architecture & Design** - Agent-native architecture patterns
+- **Development Tools** - Ruby gems, Rails style, DSPy, frontend design
+- **Content & Workflow** - Brainstorming, document review, todo tracking
+- **Multi-Agent** - Swarm orchestration patterns
+- **File Transfer** - Cloud storage uploads with rclone
+- **Browser Automation** - CLI-based browser automation
+- **Image Generation** - Gemini-based image generation
+
+[View all skills →](/plugin/skills)
+
+### MCP Servers
+
+**Context7** - Framework documentation lookup
+
+Supports 100+ frameworks including Rails, React, Next.js, Vue, Django, Laravel, and more.
+
+Tools provided:
+- `resolve-library-id` - Find library ID for a framework/package
+- `get-library-docs` - Get documentation for a specific library
+
+Starts automatically when the plugin is enabled.
+
+[View MCP servers →](/plugin/mcp)
+
+## Known Issues
+
+### MCP Servers Not Auto-Loading
+
+**Issue**: The bundled Context7 MCP server may not load automatically when the plugin is installed.
+
+**Workaround**: Manually add it to your project's `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+Or add it globally in `~/.claude/settings.json` for all projects.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Learn the Philosophy" icon="lightbulb" href="/plugin/philosophy">
+    Understand compound engineering and the 80/20 split
+  </Card>
+  <Card title="Master the Workflow" icon="arrows-spin" href="/plugin/workflow">
+    Deep dive into the Plan → Work → Review → Compound cycle
+  </Card>
+  <Card title="Explore Agents" icon="robot" href="/plugin/agents">
+    Browse all 29 specialized agents
+  </Card>
+  <Card title="View Commands" icon="terminal" href="/plugin/commands">
+    See all available slash commands
+  </Card>
+</CardGroup>

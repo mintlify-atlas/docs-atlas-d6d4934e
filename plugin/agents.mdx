@@ -1,0 +1,205 @@
+---
+title: Agents
+description: Specialized AI agents for code review, research, design, and workflow automation
+---
+
+# Agents
+
+The Compound Engineering plugin includes **29 specialized agents** organized into categories for easier discovery. Each agent is an expert in a specific domain, bringing focused knowledge and best practices to your development workflow.
+
+## What Are Agents?
+
+Agents are autonomous AI assistants that can be spawned using the `Task` tool. They run independently and in parallel, each bringing specialized expertise to analyze, review, or research specific aspects of your codebase.
+
+**How to use agents:**
+
+```
+Task agent-name: "Description of what you want the agent to do"
+```
+
+**Running multiple agents in parallel:**
+
+```
+Task security-sentinel: "Review this authentication flow"
+Task performance-oracle: "Analyze database query performance"
+Task kieran-rails-reviewer: "Review Rails conventions"
+```
+
+All three agents run simultaneously and return their findings independently.
+
+---
+
+## Review Agents (15)
+
+Review agents provide specialized code review from different perspectives, catching issues that generic linters might miss.
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `agent-native-reviewer` | Verify features are agent-native (action + context parity) | Building AI-first features with proper tool design |
+| `architecture-strategist` | Analyze architectural decisions and compliance | Major refactors, system design reviews |
+| `code-simplicity-reviewer` | Final pass for simplicity and minimalism | Before merging, to ensure code isn't over-engineered |
+| `data-integrity-guardian` | Database migrations and data integrity | Any schema changes, migration reviews |
+| `data-migration-expert` | Validate ID mappings match production, check for swapped values | Data migrations, production data changes |
+| `deployment-verification-agent` | Create Go/No-Go deployment checklists for risky data changes | Pre-deployment validation, production changes |
+| `dhh-rails-reviewer` | Rails review from DHH's perspective | Rails codebases following 37signals style |
+| `julik-frontend-races-reviewer` | Review JavaScript/Stimulus code for race conditions | Frontend code with async operations |
+| `kieran-rails-reviewer` | Rails code review with strict conventions | Rails projects requiring strict adherence to conventions |
+| `kieran-python-reviewer` | Python code review with strict conventions | Python projects requiring best practices |
+| `kieran-typescript-reviewer` | TypeScript code review with strict conventions | TypeScript/JavaScript projects |
+| `pattern-recognition-specialist` | Analyze code for patterns and anti-patterns | Code audits, identifying technical debt |
+| `performance-oracle` | Performance analysis and optimization | Performance-critical code, optimization work |
+| `schema-drift-detector` | Detect unrelated schema.rb changes in PRs | Rails PRs to catch accidental schema changes |
+| `security-sentinel` | Security audits and vulnerability assessments | Any code touching auth, payments, user data |
+
+<Note>
+**Review workflow:** The `/ce:review` command automatically runs multiple review agents in parallel and consolidates their feedback. You can also invoke individual review agents directly for focused analysis.
+</Note>
+
+---
+
+## Research Agents (5)
+
+Research agents gather context, documentation, and best practices to inform implementation decisions.
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `best-practices-researcher` | Gather external best practices and examples | Unfamiliar domains, new technologies |
+| `framework-docs-researcher` | Research framework documentation and best practices | Framework-specific features, API usage |
+| `git-history-analyzer` | Analyze git history and code evolution | Understanding why code exists, finding context |
+| `learnings-researcher` | Search institutional learnings for relevant past solutions | Checking if team has solved this before |
+| `repo-research-analyst` | Research repository structure and conventions | New codebases, understanding project patterns |
+
+**Example usage in planning:**
+
+```
+Task repo-research-analyst: "Find existing authentication patterns in this codebase"
+Task learnings-researcher: "Search for past solutions related to API rate limiting"
+Task framework-docs-researcher: "Research Rails ActiveJob best practices for background processing"
+```
+
+These agents run during `/ce:plan` to inform the planning process with real context.
+
+---
+
+## Design Agents (3)
+
+Design agents ensure UI implementations match designs and help iterate on visual design.
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `design-implementation-reviewer` | Verify UI implementations match Figma designs | After implementing UI from designs |
+| `design-iterator` | Iteratively refine UI through systematic design iterations | Improving UI/UX through rapid iteration |
+| `figma-design-sync` | Synchronize web implementations with Figma designs | Keeping code in sync with design files |
+
+<Tip>
+Design agents work best when you have Figma designs to reference. They can help catch visual regressions and ensure pixel-perfect implementations.
+</Tip>
+
+---
+
+## Workflow Agents (5)
+
+Workflow agents automate common development tasks and processes.
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `bug-reproduction-validator` | Systematically reproduce and validate bug reports | Before fixing bugs, to ensure you understand them |
+| `every-style-editor` | Edit content to conform to Every's style guide | Content editing for Every publications |
+| `lint` | Run linting and code quality checks on Ruby and ERB files | Pre-commit checks, CI/CD pipelines |
+| `pr-comment-resolver` | Address PR comments and implement fixes | After receiving PR feedback |
+| `spec-flow-analyzer` | Analyze user flows and identify gaps in specifications | Validating feature specs, finding edge cases |
+
+**Example - Resolving PR comments in parallel:**
+
+```bash
+# The /resolve_pr_parallel command uses pr-comment-resolver agent
+/resolve_pr_parallel
+```
+
+This spawns multiple `pr-comment-resolver` agents to address each PR comment simultaneously.
+
+---
+
+## Docs Agents (1)
+
+Documentation agents help create and maintain high-quality documentation.
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `ankane-readme-writer` | Create READMEs following Ankane-style template for Ruby gems | Creating new Ruby gem projects |
+
+<Note>
+The Ankane style is known for clear, concise documentation with practical examples. This agent helps maintain that standard across Ruby gem projects.
+</Note>
+
+---
+
+## Agent Locations
+
+Agents are organized in the plugin directory structure:
+
+```
+plugins/compound-engineering/agents/
+├── review/              # 15 review agents
+│   ├── agent-native-reviewer.md
+│   ├── architecture-strategist.md
+│   ├── code-simplicity-reviewer.md
+│   └── ...
+├── research/            # 5 research agents
+│   ├── best-practices-researcher.md
+│   ├── framework-docs-researcher.md
+│   └── ...
+├── design/              # 3 design agents
+│   ├── design-implementation-reviewer.md
+│   ├── design-iterator.md
+│   └── figma-design-sync.md
+├── workflow/            # 5 workflow agents
+│   ├── bug-reproduction-validator.md
+│   ├── pr-comment-resolver.md
+│   └── ...
+└── docs/                # 1 documentation agent
+    └── ankane-readme-writer.md
+```
+
+---
+
+## Advanced Usage
+
+### Running Agents Programmatically
+
+You can spawn agents from within commands or skills:
+
+```markdown
+# In a command or skill
+
+- Task security-sentinel(code_to_review)
+- Task performance-oracle(database_queries)
+```
+
+### Custom Agent Configuration
+
+Some agents respect project-specific configuration in `CLAUDE.md`. For example, the review agents can be configured using the `setup` skill:
+
+```bash
+# Configure which review agents run for your project
+/ce:review --setup
+```
+
+See the [setup skill](/plugin/skills#setup) for more details.
+
+### Combining Agents with Skills
+
+Agents often work alongside skills. For example:
+
+- The `dhh-rails-reviewer` agent uses knowledge from the `dhh-rails-style` skill
+- The `agent-native-reviewer` uses patterns from the `agent-native-architecture` skill
+
+This combination of agent expertise + skill documentation creates powerful, context-aware reviews.
+
+---
+
+## See Also
+
+- [Commands](/plugin/commands) - Slash commands that orchestrate agents
+- [Skills](/plugin/skills) - Specialized knowledge domains that agents can reference
+- [Workflow Guide](/plugin/workflow) - How agents fit into development workflows

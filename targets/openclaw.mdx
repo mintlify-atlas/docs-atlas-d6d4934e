@@ -1,0 +1,314 @@
+---
+title: OpenClaw
+description: Convert Claude Code plugins to OpenClaw TypeScript extensions
+icon: claw-marks
+---
+
+The OpenClaw converter generates a complete TypeScript extension package with skills, commands, and MCP server configuration.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to openclaw
+```
+
+## Output Structure
+
+Writes to `~/.openclaw/extensions/<plugin-name>/`:
+
+```
+~/.openclaw/extensions/compound-engineering/
+├── openclaw.plugin.json      # Plugin manifest
+├── package.json              # NPM package config
+├── index.ts                  # Entry point with command handlers
+├── skills/
+│   ├── agent-plan-specialist/
+│   │   └── SKILL.md          # Agent skills
+│   ├── cmd-workflows-plan/
+│   │   └── SKILL.md          # Command skills
+│   └── existing-skill/       # Pass-through skills
+└── openclaw.json             # MCP server config
+```
+
+<Info>
+OpenClaw extensions are **full TypeScript packages** with programmatic command handlers.
+</Info>
+
+## Conversion Details
+
+### Plugin Manifest
+
+**openclaw.plugin.json**:
+```json
+{
+  "id": "compound-engineering",
+  "name": "Compound Engineering",
+  "kind": "tool",
+  "skills": [
+    "skills/agent-plan-specialist",
+    "skills/cmd-workflows-plan",
+    "skills/existing-skill"
+  ]
+}
+```
+
+### Package Configuration
+
+**package.json**:
+```json
+{
+  "name": "openclaw-compound-engineering",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Compound Engineering Plugin",
+  "main": "index.ts",
+  "openclaw": {
+    "extensions": [
+      {
+        "id": "compound-engineering",
+        "entry": "./index.ts"
+      }
+    ]
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin"
+  ]
+}
+```
+
+### Entry Point
+
+**index.ts** (auto-generated):
+```typescript
+// Auto-generated OpenClaw plugin entry point
+// Converted from Claude Code plugin format by compound-plugin CLI
+import { promises as fs } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Pre-load skill bodies for command responses
+const skills: Record<string, string> = {};
+
+async function loadSkills() {
+  const skillsDir = path.join(__dirname, "skills");
+  try {
+    const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const skillPath = path.join(skillsDir, entry.name, "SKILL.md");
+      try {
+        const content = await fs.readFile(skillPath, "utf8");
+        // Strip frontmatter
+        const body = content.replace(/^---[\s\S]*?---\n*/, "");
+        skills[entry.name.replace(/^cmd-/, "")] = body.trim();
+      } catch {
+        // Skill file not found, skip
+      }
+    }
+  } catch {
+    // Skills directory not found
+  }
+}
+
+export default async function register(api) {
+  await loadSkills();
+
+  api.registerCommand({
+    name: "workflows-plan",
+    description: "Turn feature ideas into detailed plans",
+    acceptsArgs: true,
+    requireAuth: false,
+    handler: (ctx) => ({
+      text: skills["workflows-plan"] ?? "Command workflows-plan not found. Check skills directory.",
+    }),
+  });
+
+  // ... more commands
+}
+```
+
+<Note>
+Commands are registered programmatically. The handler returns the skill body as text.
+</Note>
+
+### Agents → Skills
+
+Agents are converted to skills in `skills/agent-<name>/`:
+
+```markdown
+---
+name: plan-specialist
+description: Planning agent for complex features
+model: claude-sonnet-4-5
+---
+
+You are a planning specialist...
+```
+
+### Commands → Skills + Handlers
+
+Commands generate both a skill and a command handler:
+
+**Skill** (`skills/cmd-workflows-plan/SKILL.md`):
+```markdown
+---
+name: cmd-workflows-plan
+description: Turn feature ideas into detailed plans
+---
+
+You are a planning specialist...
+```
+
+**Handler** (in `index.ts`):
+```typescript
+api.registerCommand({
+  name: "workflows-plan",
+  description: "Turn feature ideas into detailed plans",
+  acceptsArgs: true,
+  requireAuth: false,
+  handler: (ctx) => ({
+    text: skills["workflows-plan"] ?? "Command not found",
+  }),
+});
+```
+
+### Path Rewriting
+
+Claude paths are rewritten in skill files:
+
+```diff
+- ~/.claude/skills/
++ ~/.openclaw/skills/
+- .claude/
++ .openclaw/
+- .claude-plugin/
++ openclaw-plugin/
+```
+
+### MCP Servers
+
+MCP servers are written to `openclaw.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    },
+    "remote-api": {
+      "type": "http",
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**Server types**:
+- `stdio`: Command-based servers
+- `http`: Remote servers
+
+<Info>
+Existing `openclaw.json` is merged. Plugin servers are added, but existing entries are preserved.
+</Info>
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output | Skill Dir |
+|-------|--------|------------|
+| `workflows:plan` | `workflows-plan` | `cmd-workflows-plan` |
+| `Plan Review` | `plan-review` | `cmd-plan-review` |
+| Agent: `plan-specialist` | `plan-specialist` | `agent-plan-specialist` |
+
+Rules:
+- Lowercase only
+- Colons, slashes, spaces → hyphens
+- Special characters removed
+- Skills prefixed with `cmd-` or `agent-`
+
+## Example Output
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create implementation plan",
+  "argumentHint": "<feature description>",
+  "body": "You are a planning agent."
+}
+```
+
+**Output** (`skills/cmd-workflows-plan/SKILL.md`):
+```markdown
+---
+name: cmd-workflows-plan
+description: Create implementation plan
+---
+
+You are a planning agent.
+```
+
+**Output** (`index.ts` snippet):
+```typescript
+api.registerCommand({
+  name: "workflows-plan",
+  description: "Create implementation plan",
+  acceptsArgs: true,
+  requireAuth: false,
+  handler: (ctx) => ({
+    text: skills["workflows-plan"] ?? "Command workflows-plan not found. Check skills directory.",
+  }),
+});
+```
+
+## Limitations
+
+- **No hooks support**: OpenClaw does not have a documented hooks API
+- **Commands as text**: Handlers return skill text, not programmatic logic
+- **Skills prefixed**: All generated skills are prefixed (`cmd-`, `agent-`)
+- **Markdown rewriting**: Only `.md` files are rewritten during skill copy
+
+<Warning>
+OpenClaw extension format may change. The official OpenClaw documentation does not yet have a stable extension API contract.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to OpenClaw:
+
+```bash
+bunx @every-env/compound-plugin sync --target openclaw
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (as OpenClaw skills)
+- Personal commands are **not synced** (no documented user-level command surface)
+- MCP servers are **not synced** (official docs lack clear MCP config contract)
+
+<Note>
+OpenClaw sync currently only supports skills. Command and MCP sync are skipped until official documentation is available.
+</Note>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="OpenClaw Documentation" icon="claw-marks" href="https://openclaw.ai">
+    Official OpenClaw documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to OpenClaw
+  </Card>
+</CardGroup>

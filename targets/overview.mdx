@@ -1,0 +1,157 @@
+---
+title: Target Platforms Overview
+description: Convert Claude Code plugins to 10 different AI coding assistant formats
+---
+
+The Compound Plugin CLI converts Claude Code plugins into native formats for multiple AI coding assistants. Each target has its own conversion logic that maps Claude Code concepts (agents, commands, skills, MCP servers) to the target platform's conventions.
+
+## Supported Targets
+
+The CLI supports conversion to 10 different platforms:
+
+<CardGroup cols={2}>
+  <Card title="OpenCode" icon="code" href="/targets/opencode">
+    Official OpenCode format with deep-merge config
+  </Card>
+  <Card title="Codex" icon="terminal" href="/targets/codex">
+    Prompts + skills with TOML config
+  </Card>
+  <Card title="Factory Droid" icon="robot" href="/targets/droid">
+    Commands and droids with tool name mapping
+  </Card>
+  <Card title="Pi" icon="circle" href="/targets/pi">
+    Prompts, skills, and MCPorter integration
+  </Card>
+  <Card title="Gemini CLI" icon="gem" href="/targets/gemini">
+    TOML commands with nested namespaces
+  </Card>
+  <Card title="GitHub Copilot" icon="github" href="/targets/copilot">
+    Agent files with Copilot frontmatter
+  </Card>
+  <Card title="Kiro CLI" icon="k" href="/targets/kiro">
+    JSON agent configs with steering files
+  </Card>
+  <Card title="Windsurf" icon="wind" href="/targets/windsurf">
+    Skills and workflows with global/workspace scopes
+  </Card>
+  <Card title="OpenClaw" icon="claw-marks" href="/targets/openclaw">
+    TypeScript extension with skill-based commands
+  </Card>
+  <Card title="Qwen Code" icon="q" href="/targets/qwen">
+    YAML agents with settings extraction
+  </Card>
+</CardGroup>
+
+## Platform Comparison
+
+| Platform | Agents | Commands | Skills | MCP Support | Hooks |
+|----------|--------|----------|--------|-------------|-------|
+| **OpenCode** | ✓ Primary/subagent | ✓ .md files | ✓ Symlinked | ✓ stdio + remote | ✓ TypeScript plugin |
+| **Codex** | ✓ Skills | ✓ Prompts + skills | ✓ Pass-through | ✓ stdio + remote | ✗ |
+| **Droid** | ✓ Droids | ✓ Commands | ✓ Pass-through | ✗ | ✗ |
+| **Pi** | ✓ Skills | ✓ Prompts | ✓ Pass-through | ✓ Via MCPorter | ✗ |
+| **Gemini** | ✓ Skills | ✓ TOML files | ✓ Pass-through | ✓ stdio + remote | ✗ Different format |
+| **Copilot** | ✓ .agent.md files | ✓ Skills | ✓ Pass-through | ✓ stdio + SSE | ✗ |
+| **Kiro** | ✓ JSON configs | ✓ Skills | ✓ Pass-through | ✓ stdio only | ✗ Different format |
+| **Windsurf** | ✓ Skills | ✓ Workflows | ✓ Pass-through | ✓ stdio + remote | ✗ |
+| **OpenClaw** | ✓ Skills | ✓ TypeScript handlers | ✓ Pass-through | ✓ stdio + HTTP | ✗ |
+| **Qwen** | ✓ YAML files | ✓ .md files | ✓ Pass-through | ✓ stdio only | ✗ |
+
+## Conversion Features
+
+### Content Transformation
+
+Each converter handles platform-specific syntax differences:
+
+- **Task calls**: `Task agent-name(args)` → platform-specific subagent syntax
+- **Slash commands**: `/workflows:plan` → flattened or namespaced commands
+- **Agent references**: `@agent-name` → skill/agent invocation syntax
+- **Path rewriting**: `.claude/` → `.{platform}/` paths
+- **Tool name mapping**: Claude tool names → platform equivalents
+
+### Output Structure
+
+Each target writes to a platform-specific directory structure:
+
+- **Config-based**: OpenCode, Codex, Gemini write to config files
+- **File-based**: Droid, Windsurf, Copilot write individual files
+- **Hybrid**: Kiro, Qwen, Pi use both configs and file trees
+- **Extension**: OpenClaw generates a full TypeScript extension package
+
+### MCP Server Support
+
+MCP server conversion varies by platform:
+
+- **Full support**: OpenCode, Windsurf, Copilot (stdio + remote)
+- **stdio only**: Kiro, Qwen, Pi (via MCPorter)
+- **Merged config**: Most platforms merge into existing MCP config
+- **Prefixed env vars**: Copilot prefixes with `COPILOT_MCP_`
+
+## Installation Examples
+
+<CodeGroup>
+```bash OpenCode
+bunx @every-env/compound-plugin install compound-engineering --to opencode
+```
+
+```bash Codex
+bunx @every-env/compound-plugin install compound-engineering --to codex
+```
+
+```bash Droid
+bunx @every-env/compound-plugin install compound-engineering --to droid
+```
+
+```bash Pi
+bunx @every-env/compound-plugin install compound-engineering --to pi
+```
+
+```bash Gemini
+bunx @every-env/compound-plugin install compound-engineering --to gemini
+```
+
+```bash Copilot
+bunx @every-env/compound-plugin install compound-engineering --to copilot
+```
+
+```bash Kiro
+bunx @every-env/compound-plugin install compound-engineering --to kiro
+```
+
+```bash Windsurf
+bunx @every-env/compound-plugin install compound-engineering --to windsurf
+```
+
+```bash OpenClaw
+bunx @every-env/compound-plugin install compound-engineering --to openclaw
+```
+
+```bash Qwen
+bunx @every-env/compound-plugin install compound-engineering --to qwen
+```
+</CodeGroup>
+
+## Auto-Detection
+
+Install to all detected platforms at once:
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to all
+```
+
+The CLI will detect which AI coding assistants are installed on your system and convert to all of them automatically.
+
+<Note>
+All target formats are experimental and may change as the platforms evolve. See individual target pages for platform-specific details and limitations.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Choose a Target" icon="arrow-right" href="#supported-targets">
+    Click on any platform card above for detailed documentation
+  </Card>
+  <Card title="Sync Personal Config" icon="sync" href="/commands/sync">
+    Learn how to sync your personal Claude Code config to other platforms
+  </Card>
+</CardGroup>

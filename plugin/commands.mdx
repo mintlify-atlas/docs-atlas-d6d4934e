@@ -1,0 +1,346 @@
+---
+title: Commands
+description: Slash commands for planning, execution, review, and workflow automation
+---
+
+# Commands
+
+The Compound Engineering plugin provides **22 slash commands** organized around a core workflow: brainstorm → plan → work → review → compound.
+
+## What Are Commands?
+
+Commands are slash commands you invoke in your conversation with Claude. They orchestrate complex workflows by spawning agents, running skills, and coordinating multi-step processes.
+
+**Invocation:**
+
+```
+/ce:plan Add user authentication
+/ce:work docs/plans/2026-03-03-feat-auth-plan.md
+/ce:review
+```
+
+---
+
+## Core Workflow Commands
+
+These commands use the `ce:` prefix to unambiguously identify them as compound-engineering commands. This distinguishes them from Claude's built-in `/plan` and `/review` commands.
+
+<Note>
+**Why `ce:`?** The namespace (short for compound-engineering) makes it immediately clear these commands belong to this plugin and provides a distinct workflow separate from Claude's defaults.
+</Note>
+
+| Command | Description | Usage Example |
+|---------|-------------|---------------|
+| `/ce:brainstorm` | Explore requirements and approaches before planning | `/ce:brainstorm user authentication system` |
+| `/ce:plan` | Create implementation plans | `/ce:plan Fix checkout race condition` |
+| `/ce:work` | Execute work items systematically | `/ce:work docs/plans/2026-03-03-feat-auth-plan.md` |
+| `/ce:review` | Run comprehensive code reviews | `/ce:review` |
+| `/ce:compound` | Document solved problems to compound team knowledge | `/ce:compound` |
+
+### Workflow Progression
+
+1. **`/ce:brainstorm`** - Answer WHAT to build through collaborative dialogue
+2. **`/ce:plan`** - Answer HOW to build it with detailed planning
+3. **`/ce:work`** - Execute the plan with systematic implementation
+4. **`/ce:review`** - Review the implementation with multiple specialized agents
+5. **`/ce:compound`** - Document the solution for future reference
+
+<Accordion title="Example: Full workflow from idea to documentation">
+```bash
+# Step 1: Explore the idea
+/ce:brainstorm API rate limiting for our SaaS product
+
+# Claude asks questions, you collaborate on approach
+# Brainstorm saved to docs/brainstorms/2026-03-03-api-rate-limiting-brainstorm.md
+
+# Step 2: Create detailed plan
+/ce:plan  # Auto-detects recent brainstorm
+
+# Research agents gather context, plan saved to docs/plans/2026-03-03-feat-api-rate-limiting-plan.md
+
+# Step 3: Implement the plan
+/ce:work docs/plans/2026-03-03-feat-api-rate-limiting-plan.md
+
+# Code is written, tests are created, commits are made
+
+# Step 4: Review the implementation
+/ce:review
+
+# Security, performance, Rails reviewers all provide feedback
+# Address feedback, iterate
+
+# Step 5: Document the solution
+/ce:compound
+
+# Solution saved to docs/solutions/performance-issues/api-rate-limiting.md
+# Available for future reference via learnings-researcher agent
+```
+</Accordion>
+
+### Deprecated Aliases
+
+<Warning>
+The following aliases still work but show deprecation warnings:
+
+- `/plugin/workflow:plan` → Use `/ce:plan`
+- `/plugin/workflow:work` → Use `/ce:work`
+- `/plugin/workflow:review` → Use `/ce:review`
+- `/plugin/workflow:brainstorm` → Use `/ce:brainstorm`
+- `/plugin/workflow:compound` → Use `/ce:compound`
+
+Update to the `ce:*` equivalents to avoid warnings.
+</Warning>
+
+---
+
+## Utility Commands
+
+Utility commands automate specific tasks and support the core workflow.
+
+### Autonomous Workflows
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/lfg` | Full autonomous engineering workflow | `/lfg Add OAuth2 support` |
+| `/slfg` | Full autonomous workflow with swarm mode for parallel execution | `/slfg Refactor authentication system` |
+
+Both run the complete workflow: plan → deepen → work → review → test → video. `/slfg` uses swarm orchestration for parallel agent execution.
+
+<Accordion title="What does /lfg do?">
+`/lfg` ("Let's Fucking Go") runs this sequence automatically:
+
+1. `/ce:plan` - Create implementation plan
+2. `/deepen-plan` - Enhance plan with research agents
+3. `/ce:work` - Execute the plan
+4. `/ce:review` - Run code reviews
+5. `/resolve_todo_parallel` - Address review feedback
+6. `/test-browser` - Test affected pages
+7. `/feature-video` - Record demo video
+8. Outputs completion signal when done
+
+Use when you want full automation from idea to PR with video demo.
+</Accordion>
+
+### Planning Enhancements
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/deepen-plan` | Enhance plans with parallel research agents for each section | `/deepen-plan docs/plans/2026-03-03-feat-auth-plan.md` |
+
+**What it does:**
+- Spawns research agents for every plan section
+- Discovers and applies ALL available skills
+- Checks institutional learnings (`docs/solutions/`)
+- Queries Context7 for framework documentation
+- Runs ALL review agents in parallel
+- Synthesizes findings into enhanced plan
+
+See [deepen-plan details](/plugin/workflow#planning-phase) for more.
+
+### Creation & Documentation
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/changelog` | Create engaging changelogs for recent merges | `/changelog weekly` |
+| `/create-agent-skill` | Create or edit Claude Code skills | `/create-agent-skill` |
+| `/generate_command` | Generate new slash commands | `/generate_command analyze-dependencies` |
+| `/heal-skill` | Fix skill documentation issues | `/heal-skill skill-name` |
+
+<Accordion title="/changelog example output">
+```markdown
+# 🚀 Weekly Change Log: March 3, 2026
+
+## 🌟 New Features
+- Added OAuth2 authentication support (#456)
+- Implemented API rate limiting with Redis (#457)
+
+## 🐛 Bug Fixes
+- Fixed race condition in checkout flow (#458)
+- Resolved N+1 queries in briefs index (#459)
+
+## 🙌 Shoutouts
+@alice for the OAuth2 implementation
+@bob for performance improvements
+
+## 🎉 Fun Fact of the Day
+We reduced API response time by 60% this week!
+```
+</Accordion>
+
+### Bug Management
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/report-bug` | Report a bug in the plugin | `/report-bug /ce:work fails with empty plan` |
+| `/reproduce-bug` | Reproduce bugs using logs and console | `/reproduce-bug #123` |
+| `/triage` | Triage and prioritize issues | `/triage` |
+
+### Parallel Resolution
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/resolve_parallel` | Resolve TODO comments in parallel | `/resolve_parallel` |
+| `/resolve_pr_parallel` | Resolve PR comments in parallel | `/resolve_pr_parallel` |
+| `/resolve_todo_parallel` | Resolve todos in parallel | `/resolve_todo_parallel` |
+
+These commands spawn multiple agents to address feedback simultaneously, dramatically speeding up iteration.
+
+### Testing & Validation
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/test-browser` | Run browser tests on PR-affected pages | `/test-browser` |
+| `/xcode-test` | Build and test iOS apps on simulator | `/xcode-test` |
+| `/feature-video` | Record video walkthroughs and add to PR description | `/feature-video` |
+
+<Note>
+`/test-browser` requires the `agent-browser` CLI tool:
+
+```bash
+npm install -g agent-browser
+agent-browser install  # Downloads Chromium
+```
+
+See the [agent-browser skill](/plugin/skills#browser-automation) for details.
+</Note>
+
+### Other Utilities
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/agent-native-audit` | Audit features for agent-native design compliance | `/agent-native-audit` |
+| `/deploy-docs` | Deploy documentation sites | `/deploy-docs` |
+
+---
+
+## Command Invocation Patterns
+
+### With Arguments
+
+Most commands accept arguments to specify what to work on:
+
+```bash
+/ce:plan Add user authentication
+/ce:brainstorm API rate limiting strategy
+/changelog daily
+```
+
+### With File Paths
+
+Some commands work with files:
+
+```bash
+/ce:work docs/plans/2026-03-03-feat-auth-plan.md
+/deepen-plan docs/plans/2026-03-03-feat-auth-plan.md
+```
+
+### Without Arguments
+
+Commands without arguments often prompt for input or auto-detect context:
+
+```bash
+/ce:review              # Reviews current branch changes
+/ce:compound            # Prompts for problem description
+/test-browser           # Detects PR-affected pages
+```
+
+### Background Execution (Claude Code Web)
+
+Append `&` to run commands in the background on Claude Code web:
+
+```bash
+/ce:work docs/plans/2026-03-03-feat-auth-plan.md &
+```
+
+This lets you continue other work while the command runs.
+
+---
+
+## Command Configuration
+
+Some commands respect configuration in `CLAUDE.md`:
+
+### Review Configuration
+
+Configure which review agents run:
+
+```markdown
+# In CLAUDE.md
+review_agents:
+  - security-sentinel
+  - performance-oracle
+  - kieran-rails-reviewer
+```
+
+See the [setup skill](/plugin/skills#setup) for interactive configuration.
+
+### Project Tracker
+
+Configure issue creation from plans:
+
+```markdown
+# In CLAUDE.md
+project_tracker: github  # or 'linear'
+```
+
+Used by `/ce:plan` when creating issues.
+
+---
+
+## Command Locations
+
+Commands are organized in the plugin directory:
+
+```
+plugins/compound-engineering/commands/
+├── ce/                      # Core workflow commands
+│   ├── brainstorm.md
+│   ├── plan.md
+│   ├── work.md
+│   ├── review.md
+│   └── compound.md
+├── workflows/               # Deprecated aliases (forward to ce/*)
+│   ├── brainstorm.md
+│   ├── plan.md
+│   ├── work.md
+│   ├── review.md
+│   └── compound.md
+└── *.md                     # Utility commands
+    ├── lfg.md
+    ├── deepen-plan.md
+    ├── changelog.md
+    ├── test-browser.md
+    └── ...
+```
+
+---
+
+## Creating Custom Commands
+
+Use `/generate_command` to create your own commands:
+
+```bash
+/generate_command analyze-dependencies "Analyze and report on project dependencies"
+```
+
+This creates a new command file with boilerplate structure. Commands are markdown files with YAML frontmatter:
+
+```markdown
+---
+name: analyze-dependencies
+description: Analyze and report on project dependencies
+argument-hint: "[package name]"
+---
+
+# Analyze Dependencies
+
+[Command implementation]
+```
+
+---
+
+## See Also
+
+- [Agents](/plugin/agents) - Specialized agents that commands orchestrate
+- [Skills](/plugin/skills) - Knowledge domains that commands can activate
+- [Workflows Guide](/plugin/workflow) - End-to-end workflow examples

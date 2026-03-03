@@ -1,0 +1,390 @@
+---
+title: Compound Engineering Philosophy
+description: Each unit of work should make future work easier, not harder
+---
+
+Compound engineering is a development philosophy where **each unit of work makes future work easier**, creating a compounding knowledge system that accelerates your team over time.
+
+## The Core Principle
+
+Traditional software development accumulates technical debt:
+
+```
+Work → Ship → Work → Ship → Debt accumulates → Work slows down
+```
+
+Compound engineering creates compounding knowledge:
+
+```
+Work → Document → Work → Reuse → Knowledge compounds → Work speeds up
+```
+
+**The difference**: Traditional development treats each problem as isolated. Compound engineering treats each problem as an investment in future velocity.
+
+## The 80/20 Split
+
+Compound engineering inverts the traditional development time allocation:
+
+<Tabs>
+  <Tab title="Traditional">
+    **Traditional Development**
+    - 80% execution (coding, testing, shipping)
+    - 20% planning and review
+
+    **Result**: Fast initial progress, accumulating debt, slowing velocity over time.
+
+    ```
+    Week 1: Ship 10 features
+    Week 10: Ship 5 features (same effort)
+    Week 20: Ship 2 features (same effort)
+    ```
+  </Tab>
+  
+  <Tab title="Compound Engineering">
+    **Compound Engineering**
+    - 80% planning and review
+    - 20% execution
+
+    **Result**: Slower initial progress, compounding knowledge, accelerating velocity over time.
+
+    ```
+    Week 1: Ship 2 features (with full planning/review/docs)
+    Week 10: Ship 5 features (reusing patterns)
+    Week 20: Ship 10 features (patterns are second nature)
+    ```
+  </Tab>
+</Tabs>
+
+### Why This Works
+
+The paradox: **Spending more time on planning and review actually makes you ship faster**.
+
+Here's why:
+
+1. **Planning prevents rework** - 30 minutes of planning saves 3 hours of building the wrong thing
+2. **Review catches issues early** - 15 minutes of review prevents 2 hours of debugging in production
+3. **Documentation compounds** - 5 minutes documenting a solution saves 30 minutes next time
+4. **Patterns emerge** - After solving similar problems 3 times, the 4th takes 10% of the time
+
+## Real Examples of Compounding
+
+### Example 1: N+1 Query Problem
+
+**Without compounding**:
+```
+Occurrence 1: 30 min research → fix → ship
+Occurrence 2: 30 min research → fix → ship (forgot solution)
+Occurrence 3: 30 min research → fix → ship (different developer)
+
+Total time: 90 minutes
+```
+
+**With compounding**:
+```
+Occurrence 1: 30 min research → fix → 5 min document with /ce:compound
+Occurrence 2: 2 min lookup in docs/solutions/ → fix → ship
+Occurrence 3: 2 min lookup → fix → ship
+
+Total time: 39 minutes (56% time saved)
+```
+
+The documentation investment (5 minutes) pays back 28 minutes per occurrence.
+
+### Example 2: Feature Planning
+
+**Without compounding**:
+```
+Feature 1: 1 hour building → 2 hours debugging → 1 hour refactoring
+Feature 2: 1 hour building → 2 hours debugging → 1 hour refactoring
+Feature 3: 1 hour building → 2 hours debugging → 1 hour refactoring
+
+Total: 12 hours
+```
+
+**With compounding**:
+```
+Feature 1: 30 min planning → 30 min building → 30 min review → ship
+Feature 2: 15 min planning (reuse patterns) → 20 min building → 15 min review → ship
+Feature 3: 10 min planning (established patterns) → 15 min building → 10 min review → ship
+
+Total: 2.85 hours (76% time saved)
+```
+
+The upfront planning investment creates reusable patterns that accelerate each subsequent feature.
+
+### Example 3: Code Review
+
+**Without compounding**:
+```
+PR 1: Ship → production bug → hotfix → 3 hours
+PR 2: Ship → production bug → hotfix → 3 hours
+PR 3: Ship → production bug → hotfix → 3 hours
+
+Total: 9 hours + production incidents
+```
+
+**With compounding**:
+```
+PR 1: 20 min multi-agent review → catch issue → fix → ship cleanly
+PR 2: 15 min review (reviewers learned patterns) → ship cleanly
+PR 3: 10 min review (patterns are familiar) → ship cleanly
+
+Total: 45 minutes + zero incidents
+```
+
+The review investment prevents production incidents and creates a feedback loop where reviewers get better over time.
+
+## The Compounding Workflow
+
+The compound engineering workflow embodies this philosophy:
+
+<Steps>
+  <Step title="Plan (Research + Design)">
+    **Investment**: 30-80% of feature time
+
+    Use `/ce:plan` to:
+    - Research existing patterns in your codebase
+    - Research best practices and documented learnings
+    - Design with acceptance criteria and edge cases
+    - Create reusable implementation plan
+
+    **Payoff**: Prevents building wrong thing, surfaces reusable patterns
+  </Step>
+
+  <Step title="Work (Execute with Quality)">
+    **Investment**: 20% of feature time
+
+    Use `/ce:work` to:
+    - Follow the plan systematically
+    - Test continuously (not at the end)
+    - Use existing patterns (from planning phase)
+    - Ship complete features
+
+    **Payoff**: Faster execution from clear plan, fewer bugs from continuous testing
+  </Step>
+
+  <Step title="Review (Multi-Agent Analysis)">
+    **Investment**: 15-45 minutes per PR
+
+    Use `/ce:review` to:
+    - Run parallel security, performance, architecture reviews
+    - Check against documented learnings
+    - Catch issues before production
+    - Create structured finding todos
+
+    **Payoff**: Prevents production incidents, surfaces patterns, improves reviewer agents
+  </Step>
+
+  <Step title="Compound (Document Knowledge)">
+    **Investment**: 5-10 minutes per solution
+
+    Use `/ce:compound` to:
+    - Document problem symptoms and root cause
+    - Capture working solution with code examples
+    - Add prevention strategies
+    - Create searchable reference in docs/solutions/
+
+    **Payoff**: Next occurrence takes 2 minutes instead of 30
+  </Step>
+</Steps>
+
+**The loop**: Each cycle through this workflow makes the next cycle faster.
+
+## How Knowledge Compounds
+
+The compound engineering workflow creates multiple compounding loops:
+
+### 1. Solution Documentation Loop
+
+```
+Solve problem → /ce:compound → docs/solutions/ entry
+    ↓                                    ↓
+    ←─────── Future lookup (2 min) ←────┘
+```
+
+First time: 30 minutes research + 5 minutes documentation
+Subsequent times: 2 minutes lookup
+
+### 2. Pattern Recognition Loop
+
+```
+/ce:plan researches codebase → Surfaces existing patterns
+    ↓                                       ↓
+Follow patterns → Ship faster → More patterns → Faster research
+```
+
+As you build more features following patterns, planning gets faster because there are more examples to reference.
+
+### 3. Review Agent Learning Loop
+
+```
+/ce:review runs agents → Finds issues → Creates todos
+    ↓                                       ↓
+ Fix issues → Document in learnings-researcher → Agents reference in future reviews
+```
+
+Review agents get smarter over time by referencing your team's documented learnings.
+
+### 4. Workflow Efficiency Loop
+
+```
+Use ce:* commands → Build muscle memory → Faster execution
+    ↓                                          ↓
+ Ship faster → More time to document → More compound knowledge
+```
+
+The workflow itself becomes faster as you internalize it.
+
+## Contrast: Traditional Development
+
+Traditional development often creates **debt accumulation** instead of knowledge compounding:
+
+| Traditional Approach | Compound Engineering |
+|---------------------|---------------------|
+| Jump straight to coding | Research and plan first |
+| Ship fast, debug later | Test continuously during work |
+| Minimal code review | Multi-agent exhaustive review |
+| Move on after shipping | Document the solution |
+| Each problem feels new | Recognize patterns from past work |
+| Velocity slows over time | Velocity accelerates over time |
+| Knowledge lives in people's heads | Knowledge lives in searchable docs |
+| Repeat the same debugging | Lookup documented solutions |
+
+**The traditional result**: Each feature takes longer than the last because:
+- No documented patterns to follow
+- Bugs compound and interact in complex ways
+- Same problems solved repeatedly by different people
+- Knowledge lost when people leave
+
+**The compound result**: Each feature takes less time than the last because:
+- Patterns are documented and reusable
+- Review catches issues before they compound
+- Solutions are documented and searchable
+- Knowledge persists in the codebase
+
+## Measuring Compounding
+
+How to know if compound engineering is working:
+
+### Time to Ship Similar Features
+
+```
+Feature Type: User Authentication
+
+1st implementation: 8 hours
+2nd implementation: 4 hours (referenced patterns from 1st)
+3rd implementation: 2 hours (pattern is established)
+```
+
+You should see **exponential improvement** for similar feature types.
+
+### Solution Lookup vs. Fresh Research
+
+```bash
+# Count documented solutions
+find docs/solutions -name "*.md" | wc -l
+# → Should grow over time
+
+# Grep for solution lookups in recent plans
+grep -r "docs/solutions" docs/plans/*.md | wc -l
+# → Should increase as more solutions are available
+```
+
+As `docs/solutions/` grows, you should reference it more often during planning.
+
+### Production Incidents Over Time
+
+```
+Month 1: 12 incidents
+Month 2: 8 incidents (review agents catching more)
+Month 3: 3 incidents (patterns and reviews compound)
+```
+
+As review agents reference more documented learnings, they catch issues that previously reached production.
+
+### Developer Onboarding Time
+
+```
+New developer without compound knowledge:
+- Week 1: Reading undocumented code, asking questions
+- Week 2: Still ramping, making same mistakes
+- Week 4: Productive but missing context
+
+New developer with compound knowledge:
+- Week 1: Reading docs/solutions/, understanding patterns
+- Week 2: Shipping features following documented patterns
+- Week 4: Contributing to docs/solutions/
+```
+
+Good documentation compounds team effectiveness.
+
+## When to Use This Philosophy
+
+Compound engineering is especially valuable when:
+
+- **Building for the long term** - The compounding effect needs time to pay off
+- **Working in a team** - Shared knowledge compounds across people
+- **Solving similar problems repeatedly** - Documentation investment pays back multiple times
+- **Quality matters more than speed** - Upfront review prevents costly production issues
+- **Onboarding new team members** - Documented patterns accelerate ramp-up
+
+**Not ideal for**:
+- Quick prototypes or throwaway code
+- Solo projects with no reuse potential
+- Problems you'll never encounter again
+- Extreme time pressure where speed trumps quality
+
+## Getting Started
+
+Start compounding knowledge today:
+
+<Steps>
+  <Step title="Start with one feature">
+    Pick your next feature and run:
+    ```bash
+    /ce:plan "Your feature description"
+    ```
+    
+    Notice how planning forces you to research existing patterns and think through edge cases.
+  </Step>
+
+  <Step title="Document one solution">
+    After fixing your next bug, run:
+    ```bash
+    /ce:compound
+    ```
+    
+    Spend 5 minutes documenting what you learned. Next time you see similar symptoms, lookup takes 2 minutes.
+  </Step>
+
+  <Step title="Review one PR thoroughly">
+    Before merging your next PR, run:
+    ```bash
+    /ce:review
+    ```
+    
+    Multi-agent review catches issues you would have debugged in production.
+  </Step>
+
+  <Step title="Repeat the cycle">
+    Use the workflow for every feature:
+    ```bash
+    /ce:plan → /ce:work → /ce:review → /ce:compound
+    ```
+    
+    Each cycle makes the next one faster.
+  </Step>
+</Steps>
+
+**The key insight**: You're not just shipping features. You're building a knowledge system that makes your team faster over time.
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Master the Workflow" icon="arrows-spin" href="/plugin/workflow">
+    Deep dive into Plan → Work → Review → Compound
+  </Card>
+  <Card title="View All Commands" icon="terminal" href="/plugin/commands">
+    Explore the ce:* workflow commands
+  </Card>
+</CardGroup>

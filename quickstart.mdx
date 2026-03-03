@@ -1,80 +1,330 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Install the compound-engineering plugin to OpenCode in 30 seconds and start using powerful AI agents, commands, and skills.
 ---
 
-## Get started in three steps
+# Quick Start
 
-Get your documentation site running locally and make your first customization.
+Get started with the compound-engineering plugin in under a minute. This guide shows you how to install it to OpenCode, but the same process works for any supported platform.
 
-### Step 1: Set up your local environment
+## Install to OpenCode
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+The fastest way to get started is installing the bundled compound-engineering plugin:
+
+<Steps>
+  <Step title="Run the install command">
+    Use `bunx` to install the plugin to OpenCode without any setup:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    bunx @every-env/compound-plugin install compound-engineering --to opencode
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    This command:
+    - Downloads the latest version of the CLI
+    - Converts the compound-engineering plugin to OpenCode format
+    - Installs agents, commands, skills, and MCP servers to `~/.config/opencode/`
+  </Step>
+  
+  <Step title="Verify the installation">
+    Check what was installed:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    ls ~/.config/opencode/agents/
+    ls ~/.config/opencode/commands/
+    ls ~/.config/opencode/skills/
+    ```
+    
+    You should see:
+    - **29 agents** organized by category (review, research, design, workflow, docs)
+    - **22 commands** for workflow automation and utilities
+    - **20 skills** for architecture, development, and orchestration
+  </Step>
+  
+  <Step title="Use your first command">
+    Try the core workflow commands in OpenCode:
+    
+    ```bash
+    # Create an implementation plan
+    /ce:plan
+    
+    # Run a comprehensive code review
+    /ce:review
+    
+    # Execute work items systematically
+    /ce:work
+    
+    # Document learnings for future use
+    /ce:compound
+    ```
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## What Gets Installed
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+### Agents (29)
 
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Specialized AI agents for different aspects of development:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Review Agents (15)" icon="magnifying-glass">
+    - Architecture strategist
+    - Security sentinel
+    - Performance oracle
+    - DHH Rails reviewer
+    - Data integrity guardian
+    - Schema drift detector
+    - And 9 more specialized reviewers
+  </Card>
+  
+  <Card title="Research Agents (5)" icon="book">
+    - Best practices researcher
+    - Framework docs researcher
+    - Git history analyzer
+    - Learnings researcher
+    - Repo research analyst
+  </Card>
+  
+  <Card title="Design Agents (3)" icon="paintbrush">
+    - Design implementation reviewer
+    - Design iterator
+    - Figma design sync
+  </Card>
+  
+  <Card title="Workflow Agents (5)" icon="list-check">
+    - Bug reproduction validator
+    - Every style editor
+    - Lint runner
+    - PR comment resolver
+    - Spec flow analyzer
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+### Commands (22)
+
+Workflow automation and utilities:
+
+**Core Workflow Commands** (use `ce:` prefix):
+```bash
+/ce:plan          # Create implementation plans
+/ce:work          # Execute work items systematically
+/ce:review        # Run comprehensive code reviews
+/ce:compound      # Document solved problems
+/ce:brainstorm    # Explore requirements before planning
+```
+
+**Utility Commands**:
+```bash
+/lfg              # Full autonomous engineering workflow
+/slfg             # Full autonomous workflow with swarm mode
+/deepen-plan      # Enhance plans with parallel research
+/changelog        # Create engaging changelogs
+/create-agent-skill  # Create or edit skills
+/resolve_parallel # Resolve TODOs in parallel
+/triage           # Triage and prioritize issues
+```
+
+### Skills (20)
+
+Reusable knowledge modules:
+
+- **Architecture** - agent-native-architecture, skill-creator
+- **Development** - dhh-rails-style, dspy-ruby, frontend-design, andrew-kane-gem-writer
+- **Workflow** - brainstorming, git-worktree, file-todos, proof, document-review
+- **Orchestration** - orchestrating-swarms for multi-agent coordination
+- **Tools** - agent-browser, rclone, gemini-imagegen
+
+### MCP Server
+
+The **Context7** MCP server provides framework documentation lookup:
+
+- `resolve-library-id` - Find library ID for a framework/package
+- `get-library-docs` - Get documentation for specific libraries
+- Supports 100+ frameworks (Rails, React, Next.js, Vue, Django, Laravel, etc.)
+
+## Install to Other Platforms
+
+The same plugin works across all supported platforms:
+
+<CodeGroup>
+```bash OpenCode
+bunx @every-env/compound-plugin install compound-engineering --to opencode
+```
+
+```bash Codex
+bunx @every-env/compound-plugin install compound-engineering --to codex
+```
+
+```bash Factory Droid
+bunx @every-env/compound-plugin install compound-engineering --to droid
+```
+
+```bash Pi
+bunx @every-env/compound-plugin install compound-engineering --to pi
+```
+
+```bash Gemini CLI
+bunx @every-env/compound-plugin install compound-engineering --to gemini
+```
+
+```bash GitHub Copilot
+bunx @every-env/compound-plugin install compound-engineering --to copilot
+```
+
+```bash Kiro CLI
+bunx @every-env/compound-plugin install compound-engineering --to kiro
+```
+
+```bash Windsurf
+bunx @every-env/compound-plugin install compound-engineering --to windsurf
+```
+
+```bash OpenClaw
+bunx @every-env/compound-plugin install compound-engineering --to openclaw
+```
+
+```bash Qwen Code
+bunx @every-env/compound-plugin install compound-engineering --to qwen
+```
+
+```bash All Detected Platforms
+bunx @every-env/compound-plugin install compound-engineering --to all
+```
+</CodeGroup>
+
+## Example: Complete Workflow
+
+Here's how to use the compound engineering workflow on a real feature:
+
+<Steps>
+  <Step title="Brainstorm the approach">
+    ```bash
+    /ce:brainstorm
+    ```
+    
+    Explore requirements and discuss different approaches before committing to a plan.
+  </Step>
+  
+  <Step title="Create a detailed plan">
+    ```bash
+    /ce:plan
+    ```
+    
+    Turn your feature idea into a detailed implementation plan with steps, considerations, and testing strategy.
+  </Step>
+  
+  <Step title="Execute the work">
+    ```bash
+    /ce:work
+    ```
+    
+    Work through your plan systematically with git worktrees and task tracking.
+  </Step>
+  
+  <Step title="Run comprehensive review">
+    ```bash
+    /ce:review
+    ```
+    
+    Multi-agent code review covers:
+    - Security vulnerabilities
+    - Performance bottlenecks
+    - Architecture compliance
+    - Code simplicity
+    - Data integrity
+    - Framework best practices
+  </Step>
+  
+  <Step title="Document learnings">
+    ```bash
+    /ce:compound
+    ```
+    
+    Capture what you learned to make similar features easier next time. This is how the workflow compounds.
+  </Step>
+</Steps>
+
+## Sync Your Personal Config
+
+<Info>
+  Already using Claude Code? Sync your personal skills, commands, and MCP servers to other platforms automatically.
+</Info>
+
+```bash
+# Sync to all detected AI coding tools
+bunx @every-env/compound-plugin sync
+
+# Sync to specific platform
+bunx @every-env/compound-plugin sync --target opencode
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (as symlinks)
+- Personal slash commands from `~/.claude/commands/`
+- MCP servers from `~/.claude/settings.json`
+
+Skills are symlinked, so changes in Claude Code are reflected immediately in other tools.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="CLI Reference" icon="terminal" href="/commands/overview">
+    Explore all available commands and options
+  </Card>
+  
+  <Card title="Plugin Components" icon="box" href="/plugin/agents">
+    Learn about the 29 agents, 22 commands, and 20 skills
+  </Card>
+  
+  <Card title="Conversion Guide" icon="arrows-rotate" href="/commands/convert">
+    Convert your own Claude Code plugins
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/advanced/configuration">
+    Customize behavior and output locations
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### MCP Server Not Loading
+
+If the Context7 MCP server doesn't auto-load, manually add it to your config:
+
+**For OpenCode** (`~/.config/opencode/opencode.json`):
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+### Commands Not Found
+
+If commands aren't recognized after installation:
+
+1. Restart your AI coding assistant
+2. Check that files were written to the correct location:
+   ```bash
+   ls ~/.config/opencode/commands/
+   ```
+3. Verify the assistant is configured to read from that directory
+
+### Permission Errors
+
+If you see permission errors during installation:
+
+```bash
+# Ensure the config directory exists and is writable
+mkdir -p ~/.config/opencode
+chmod u+w ~/.config/opencode
+```
+
+## Learn More
+
+- [Full component reference](https://github.com/EveryInc/compound-engineering-plugin/blob/main/plugins/compound-engineering/README.md) - Detailed docs for all agents, commands, and skills
+- [Compound engineering philosophy](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents) - How Every uses AI agents
+- [Origin story](https://every.to/source-code/my-ai-had-already-fixed-the-code-before-i-saw-it) - The story behind compound engineering

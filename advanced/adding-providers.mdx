@@ -1,0 +1,283 @@
+---
+title: Adding Target Providers
+description: Extend the CLI to support new AI coding platforms
+---
+
+This guide walks through adding support for a new target provider (e.g., a new AI coding platform).
+
+## Architecture Overview
+
+The conversion system has three main layers:
+
+### 1. Targets (`src/targets/`)
+
+Target handlers define the conversion and output strategy for each platform.
+
+```typescript
+export type TargetHandler<TBundle = unknown> = {
+  name: string
+  implemented: boolean
+  defaultScope?: TargetScope // "global" | "workspace"
+  supportedScopes?: TargetScope[]
+  convert: (plugin: ClaudePlugin, options: ClaudeToOpenCodeOptions) => TBundle | null
+  write: (outputRoot: string, bundle: TBundle, scope?: TargetScope) => Promise<void>
+}
+```
+
+**Location:** `src/targets/index.ts` (registry) and `src/targets/<provider>.ts` (implementation)
+
+### 2. Converters (`src/converters/`)
+
+Converters transform Claude plugin structure into target-specific format.
+
+**Responsibilities:**
+- Map agents to target's agent/prompt format
+- Convert commands to target-specific commands
+- Transform tool names and permissions
+- Translate hooks/events to target's event system
+- Normalize model names for target's supported models
+
+**Example:** `src/converters/claude-to-codex.ts`
+
+### 3. Types (`src/types/`)
+
+Type definitions for each platform's configuration format.
+
+**Example structure:**
+```typescript
+// src/types/codex.ts
+export type CodexBundle = {
+  prompts: CodexPrompt[]
+  skillDirs: { name: string; sourceDir: string }[]
+  generatedSkills: CodexGeneratedSkill[]
+  mcpServers?: Record<string, ClaudeMcpServer>
+}
+```
+
+## Adding a New Provider
+
+<Steps>
+  <Step title="Define the target entry">
+    Add a new handler in `src/targets/index.ts` with `implemented: false` until complete.
+
+    ```typescript
+    // src/targets/index.ts
+    export const targets: Record<string, TargetHandler> = {
+      // ... existing targets ...
+      codex: {
+        name: "codex",
+        implemented: false, // Set to true when complete
+        convert: convertClaudeToCodex as TargetHandler<CodexBundle>["convert"],
+        write: writeCodexBundle as TargetHandler<CodexBundle>["write"],
+      },
+    }
+    ```
+
+    Create a dedicated writer module in `src/targets/<provider>.ts`.
+
+    ```typescript
+    // src/targets/codex.ts
+    import type { CodexBundle } from "../types/codex"
+
+    export async function writeCodexBundle(
+      outputRoot: string,
+      bundle: CodexBundle,
+      scope?: TargetScope,
+    ): Promise<void> {
+      // Write prompts, skills, config files
+    }
+    ```
+  </Step>
+
+  <Step title="Define types and mapping">
+    Add provider-specific types under `src/types/<provider>.ts`.
+
+    ```typescript
+    // src/types/codex.ts
+    export type CodexPrompt = {
+      name: string
+      content: string
+    }
+
+    export type CodexGeneratedSkill = {
+      name: string
+      description: string
+      content: string
+    }
+
+    export type CodexBundle = {
+      prompts: CodexPrompt[]
+      skillDirs: { name: string; sourceDir: string }[]
+      generatedSkills: CodexGeneratedSkill[]
+      mcpServers?: Record<string, ClaudeMcpServer>
+    }
+    ```
+
+    Implement conversion logic in `src/converters/claude-to-<provider>.ts`.
+
+    ```typescript
+    // src/converters/claude-to-codex.ts
+    import type { ClaudePlugin } from "../types/claude"
+    import type { CodexBundle } from "../types/codex"
+    import type { ClaudeToOpenCodeOptions } from "./claude-to-opencode"
+
+    export function convertClaudeToCodex(
+      plugin: ClaudePlugin,
+      options: ClaudeToOpenCodeOptions,
+    ): CodexBundle {
+      // Convert agents to prompts/skills
+      // Map tools and permissions
+      // Transform hooks to events
+      return bundle
+    }
+    ```
+
+    **Keep mappings explicit:**
+    - Tool name mappings (bash, read, write, etc.)
+    - Permission modes
+    - Hook/event equivalents
+    - Model naming conventions
+  </Step>
+
+  <Step title="Wire the CLI">
+    Ensure `convert` and `install` commands support the new provider:
+
+    - `--to <provider>` flag
+    - `--also <provider>` for multi-target output
+    - Consistent behavior with existing providers
+
+    **Already handled** if you registered the target in `src/targets/index.ts`. The CLI automatically picks up new targets from the registry.
+
+    Add custom home directory support if needed:
+
+    ```typescript
+    // src/commands/install.ts
+    codexHome: {
+      type: "string",
+      alias: "codex-home",
+      description: "Write Codex output to this .codex root (ex: ~/.codex)",
+    },
+    ```
+  </Step>
+
+  <Step title="Tests (required)">
+    Add comprehensive test coverage before marking `implemented: true`.
+
+    **1. Extend fixtures**
+
+    Add sample content in `tests/fixtures/sample-plugin/`:
+    ```
+    agents/
+    commands/
+    skills/
+    .claude-plugin/plugin.json
+    ```
+
+    **2. Add converter tests**
+
+    ```typescript
+    // tests/codex-converter.test.ts
+    import { test, expect } from "bun:test"
+    import { convertClaudeToCodex } from "../src/converters/claude-to-codex"
+
+    test("converts agents to codex skills", () => {
+      const bundle = convertClaudeToCodex(mockPlugin, options)
+      expect(bundle.generatedSkills).toHaveLength(2)
+    })
+
+    test("maps tool permissions correctly", () => {
+      // Test permission mapping logic
+    })
+    ```
+
+    **3. Add writer tests**
+
+    ```typescript
+    // tests/codex-writer.test.ts
+    import { test, expect } from "bun:test"
+    import { writeCodexBundle } from "../src/targets/codex"
+
+    test("writes prompts to correct location", async () => {
+      await writeCodexBundle(tmpDir, bundle)
+      expect(await exists(path.join(tmpDir, "prompts", "test.md"))).toBe(true)
+    })
+    ```
+
+    **4. Add CLI integration test**
+
+    ```typescript
+    // tests/cli.test.ts
+    test("install command supports codex target", async () => {
+      const result = await runCLI(["install", "test-plugin", "--to", "codex"])
+      expect(result.exitCode).toBe(0)
+    })
+    ```
+
+    Run tests:
+    ```bash
+    bun test
+    ```
+  </Step>
+
+  <Step title="Update documentation">
+    Update the README and relevant docs:
+
+    - Add provider to `--to` option list
+    - Document output locations
+    - Explain any provider-specific options
+    - Add usage examples
+
+    ```markdown
+    ## Supported Targets
+
+    - `opencode` - OpenCode format (`~/.config/opencode/`)
+    - `codex` - Codex format (`~/.codex/`)
+    - ...
+    ```
+  </Step>
+</Steps>
+
+## When to Add a Provider
+
+Add a new provider when **at least one** of these is true:
+
+<Check>
+  A real user or workflow needs it now
+</Check>
+
+<Check>
+  The target format is stable and documented
+</Check>
+
+<Check>
+  There's a clear mapping for tools, permissions, and hooks
+</Check>
+
+<Check>
+  You can write fixtures and tests that validate the mapping
+</Check>
+
+<Warning>
+  Avoid adding a provider if the target specification is unstable or undocumented. Wait for the format to stabilize.
+</Warning>
+
+## Real-World Example
+
+The Codex target demonstrates the full implementation:
+
+**Files:**
+- `src/types/codex.ts` - Type definitions (src/types/codex.ts:1)
+- `src/converters/claude-to-codex.ts` - Conversion logic (src/converters/claude-to-codex.ts:1)
+- `src/targets/codex.ts` - Writer implementation (src/targets/codex.ts:1)
+- `src/targets/index.ts` - Registry entry (src/targets/index.ts:77-82)
+- `tests/codex-converter.test.ts` - Converter tests
+- `tests/codex-writer.test.ts` - Writer tests
+- `tests/cli.test.ts` - CLI integration tests
+
+**Key conversion decisions:**
+- Claude agents → Codex skills
+- Claude commands → Codex prompts + command skills
+- Tool mappings for Codex's tool system
+- MCP server pass-through
+
+Review these files to understand the complete implementation pattern.

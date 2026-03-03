@@ -1,0 +1,262 @@
+---
+title: Kiro CLI
+description: Convert Claude Code plugins to Kiro JSON agents with steering files
+icon: k
+---
+
+The Kiro CLI converter creates JSON agent configs, prompt files, skills, and steering files for project context.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to kiro
+```
+
+## Output Structure
+
+Writes to `.kiro/`:
+
+```
+.kiro/
+├── agents/
+│   ├── agent-name.json       # Agent config
+│   └── prompts/
+│       └── agent-name.md     # Agent prompt body
+├── skills/
+│   ├── command-name/
+│   │   └── SKILL.md          # Commands as skills
+│   └── existing-skill/       # Pass-through skills
+├── steering/
+│   └── compound-engineering.md  # CLAUDE.md content
+└── settings/
+    └── mcp.json              # MCP server config (stdio only)
+```
+
+<Info>
+Kiro uses a **split config** approach: JSON for agent metadata, Markdown for prompt content.
+</Info>
+
+## Conversion Details
+
+### Agents → JSON Configs + Prompts
+
+Each agent generates two files:
+
+**Config** (`.kiro/agents/plan-specialist.json`):
+```json
+{
+  "name": "plan-specialist",
+  "description": "Planning agent for complex features",
+  "prompt": "file://./prompts/plan-specialist.md",
+  "tools": ["*"],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "includeMcpJson": true,
+  "welcomeMessage": "Switching to the plan-specialist agent. Planning agent for complex features"
+}
+```
+
+**Prompt** (`.kiro/agents/prompts/plan-specialist.md`):
+```markdown
+## Capabilities
+- Break down complex features
+- Create detailed plans
+
+You are a planning specialist...
+```
+
+### Commands → Skills
+
+Commands become skills:
+
+```markdown
+---
+name: workflows-plan
+description: Turn feature ideas into detailed plans
+---
+
+You are a planning specialist. Use the use_subagent tool to delegate to the repo-research-analyst agent: research the feature.
+```
+
+### Steering Files
+
+If the plugin has a `CLAUDE.md` file, it's converted to a steering file:
+
+```markdown
+# Compound Engineering
+
+This plugin provides tools for compound engineering workflows...
+```
+
+Steering files provide context to all agents in the project.
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Use the use_subagent tool to delegate to the repo-research-analyst agent: feature_description
+```
+
+**Path rewriting**:
+```diff
+- ~/.claude/skills/
++ ~/.kiro/skills/
+- .claude/
++ .kiro/
+```
+
+**Slash command refs**:
+```diff
+- Run /workflows:plan
++ Run the workflows-plan skill
+```
+
+**Tool name mapping**:
+```diff
+- Use the Bash tool
++ Use the shell tool
+
+- Use the Write tool
++ Use the write tool
+
+- Use the Read tool
++ Use the read tool
+```
+
+### Tool Name Mapping
+
+| Claude | Kiro | Notes |
+|--------|------|-------|
+| `Bash` | `shell` | Shell commands |
+| `Write` | `write` | Full-file write |
+| `Read` | `read` | Read files |
+| `Edit` | `write` | **Lossy**: Kiro write is full-file, not surgical edit |
+| `Glob` | `glob` | Find files |
+| `Grep` | `grep` | Search content |
+| `WebFetch` | `web_fetch` | HTTP requests |
+| `Task` | `use_subagent` | Subagent delegation |
+
+<Warning>
+`Edit` maps to `write`, which is a **lossy** mapping. Kiro's write tool rewrites the entire file, unlike Claude's surgical edits.
+</Warning>
+
+### MCP Servers
+
+MCP servers are written to `settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    }
+  }
+}
+```
+
+**stdio only**: Kiro only supports stdio-based MCP servers (command + args).
+
+<Warning>
+Remote MCP servers (HTTP/SSE) are **not supported** and will be skipped with a warning.
+</Warning>
+
+## Name Normalization
+
+Names are normalized to kebab-case with **strict validation**:
+
+| Input | Output | Valid? |
+|-------|--------|--------|
+| `workflows:plan` | `workflows-plan` | ✓ |
+| `Plan Review` | `plan-review` | ✓ |
+| `my/command` | `my-command` | ✓ |
+| `UPPERCASE` | `uppercase` | ✓ |
+| `123-start` | `item` | ✗ (must start with letter) |
+| `very-long-name-that-exceeds-64-chars...` | Truncated at 64 | ✓ |
+
+Rules:
+- **Max length**: 64 characters
+- **Pattern**: `/^[a-z][a-z0-9-]*$/`
+- Must start with a letter
+- Lowercase only
+- Colons, slashes, spaces → hyphens
+- Consecutive hyphens collapsed
+
+## Example Output
+
+**Input** (Claude agent):
+```json
+{
+  "name": "code-review-agent",
+  "description": "Review code for issues",
+  "capabilities": ["Identify bugs", "Suggest improvements"],
+  "body": "You review code carefully."
+}
+```
+
+**Output** (`.kiro/agents/code-review-agent.json`):
+```json
+{
+  "name": "code-review-agent",
+  "description": "Review code for issues",
+  "prompt": "file://./prompts/code-review-agent.md",
+  "tools": ["*"],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "includeMcpJson": true,
+  "welcomeMessage": "Switching to the code-review-agent agent. Review code for issues"
+}
+```
+
+**Output** (`.kiro/agents/prompts/code-review-agent.md`):
+```markdown
+## Capabilities
+- Identify bugs
+- Suggest improvements
+
+You review code carefully.
+```
+
+## Limitations
+
+- **stdio MCP only**: Remote MCP servers are not supported
+- **No hooks support**: Kiro uses a different hook format (preToolUse/postToolUse in agent configs)
+- **Lossy tool mapping**: `Edit` → `write` loses surgical edit capability
+- **64-char name limit**: Names are truncated at 64 characters
+- **Description truncation**: Descriptions are limited to 1024 characters
+
+<Warning>
+If your plugin has hooks, they will **not** be converted. Kiro's hook format (preToolUse/postToolUse) is incompatible with Claude's event-based hooks.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to Kiro:
+
+```bash
+bunx @every-env/compound-plugin sync --target kiro
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (symlinked)
+- Personal commands from `~/.claude/commands/` (as skills)
+- MCP servers from `~/.claude/settings.json` (stdio only, to `settings/mcp.json`)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Kiro CLI Documentation" icon="k" href="https://kiro.ai">
+    Official Kiro CLI documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Kiro
+  </Card>
+</CardGroup>

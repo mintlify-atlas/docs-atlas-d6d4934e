@@ -1,0 +1,262 @@
+---
+title: Pi
+description: Convert Claude Code plugins to Pi format with MCPorter integration
+icon: circle
+---
+
+The Pi converter creates prompts, skills, extensions, and MCPorter configuration for MCP server access.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to pi
+```
+
+## Output Structure
+
+### Global Installation (`~/.pi/agent/`)
+
+```
+~/.pi/agent/
+├── prompts/
+│   └── *.md              # Command prompts
+├── skills/
+│   ├── agent-name/
+│   │   └── SKILL.md      # Agent skills
+│   └── existing-skill/   # Pass-through skills
+├── extensions/
+│   └── compound-engineering-compat.ts  # Compatibility extension
+├── compound-engineering/
+│   └── mcporter.json     # MCPorter config for MCP access
+└── AGENTS.md             # Pi tool mapping notes
+```
+
+### Project Installation (`.pi/`)
+
+Same structure, but in `.pi/` directory at project root.
+
+<Info>
+Pi uses **MCPorter** to access MCP servers. The converter generates `mcporter.json` with server configs.
+</Info>
+
+## Conversion Details
+
+### Commands → Prompts
+
+Commands become prompts:
+
+```markdown
+---
+description: Turn feature ideas into detailed plans
+argument-hint: <feature description>
+---
+
+You are a planning specialist. Run subagent with agent="repo-research-analyst" and task="research the feature".
+
+## Pi + MCPorter note
+For MCP access in Pi, use MCPorter via the generated tools:
+- `mcporter_list` to inspect available MCP tools
+- `mcporter_call` to invoke a tool
+```
+
+<Note>
+If the command body mentions "mcp", a compatibility note is automatically appended explaining how to use MCPorter.
+</Note>
+
+### Agents → Skills
+
+Agents are converted to skills:
+
+```markdown
+---
+name: plan-specialist
+description: Planning agent for complex features
+---
+
+## Capabilities
+- Break down complex features
+- Identify dependencies
+- Create detailed plans
+
+You are a planning specialist...
+```
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Run subagent with agent="repo-research-analyst" and task="feature_description".
+```
+
+**Slash commands**:
+```diff
+- Run /workflows:plan
++ Run /workflows-plan
+```
+
+**Tool references**:
+```diff
+- Use AskUserQuestion to prompt the user
++ Use ask_user_question to prompt the user
+
+- Use TodoWrite to track tasks
++ Use file-based todos (todos/ + /skill:file-todos)
+```
+
+**Path rewriting**: Not transformed (Pi doesn't need path rewriting)
+
+### MCPorter Configuration
+
+MCP servers are converted to MCPorter format:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    },
+    "remote-api": {
+      "baseUrl": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**Stdio servers**:
+- `command`: Executable path
+- `args`: Command arguments
+- `env`: Environment variables
+
+**Remote servers**:
+- `baseUrl`: HTTP endpoint (mapped from `url`)
+- `headers`: HTTP headers
+
+### Compatibility Extension
+
+A TypeScript extension is generated for Pi compatibility:
+
+```typescript
+// ~/.pi/agent/extensions/compound-engineering-compat.ts
+
+// Provides compatibility shims for:
+// - Claude Task syntax → Pi subagent calls
+// - Tool name mappings
+// - MCP access via MCPorter
+```
+
+### AGENTS.md Block
+
+The converter adds/updates a managed block in `AGENTS.md`:
+
+```markdown
+<!-- BEGIN COMPOUND PI TOOL MAP -->
+## Compound Engineering (Pi compatibility)
+
+This block is managed by compound-plugin.
+
+Compatibility notes:
+- Claude Task(agent, args) maps to the subagent extension tool
+- For parallel agent runs, batch multiple subagent calls with multi_tool_use.parallel
+- AskUserQuestion maps to the ask_user_question extension tool
+- MCP access uses MCPorter via mcporter_list and mcporter_call extension tools
+- MCPorter config path: .pi/compound-engineering/mcporter.json (project) or ~/.pi/agent/compound-engineering/mcporter.json (global)
+<!-- END COMPOUND PI TOOL MAP -->
+```
+
+<Info>
+The block is upserted — existing content outside the markers is preserved.
+</Info>
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output |
+|-------|--------|
+| `workflows:plan` | `workflows-plan` |
+| `skill:file-todos` | `skill:file-todos` (preserved) |
+| `Plan Review` | `plan-review` |
+| `UPPERCASE` | `uppercase` |
+
+Rules:
+- Lowercase only
+- Colons in `skill:` prefix preserved, others → hyphens
+- Slashes, spaces → hyphens
+- Special characters removed
+
+## Example Output
+
+**Input** (Claude command with MCP reference):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create plan",
+  "body": "Use MCP filesystem tools to read the codebase. Task repo-research-analyst(analyze)."
+}
+```
+
+**Output** (`~/.pi/agent/prompts/workflows-plan.md`):
+```markdown
+---
+description: Create plan
+argument-hint: 
+---
+
+Use MCP filesystem tools to read the codebase. Run subagent with agent="repo-research-analyst" and task="analyze".
+
+## Pi + MCPorter note
+For MCP access in Pi, use MCPorter via the generated tools:
+- `mcporter_list` to inspect available MCP tools
+- `mcporter_call` to invoke a tool
+```
+
+**Output** (`~/.pi/agent/compound-engineering/mcporter.json`):
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+    }
+  }
+}
+```
+
+## Limitations
+
+- **stdio servers only**: Remote MCP servers are supported via `baseUrl`, but Pi's MCPorter may have limitations
+- **No hooks**: Pi does not have a hooks equivalent
+- **Description truncation**: Descriptions are limited to 1024 characters
+- **Manual tool invocation**: MCP tools must be called via `mcporter_list` and `mcporter_call`
+
+## Sync Support
+
+Sync personal Claude config to Pi:
+
+```bash
+bunx @every-env/compound-plugin sync --target pi
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (as symlinks)
+- Personal commands from `~/.claude/commands/` (as prompts)
+- MCP servers from `~/.claude/settings.json` (to `mcporter.json`)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Pi Documentation" icon="circle" href="https://pi.ai">
+    Official Pi documentation
+  </Card>
+  <Card title="MCPorter" icon="bridge" href="https://github.com/modelcontextprotocol/mcporter">
+    MCPorter for MCP integration
+  </Card>
+</CardGroup>

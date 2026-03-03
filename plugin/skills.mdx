@@ -1,0 +1,417 @@
+---
+title: Skills
+description: Specialized knowledge domains that activate automatically when needed
+---
+
+# Skills
+
+The Compound Engineering plugin includes **20 specialized skills** organized by domain. Skills provide deep, focused expertise that Claude can reference when working on related tasks.
+
+## What Are Skills?
+
+Skills are structured knowledge documents that Claude loads when a task matches their domain. They contain:
+
+- Domain-specific instructions and patterns
+- Reference documentation and examples
+- Workflows and checklists
+- Scripts and templates
+- Best practices and anti-patterns
+
+**Skills activate automatically** when Claude recognizes a relevant task. You can also load them explicitly.
+
+**Loading a skill manually:**
+
+```markdown
+Load the dhh-rails-style skill and apply it to this controller code.
+```
+
+**Skills in commands:**
+
+Commands often load skills automatically. For example, `/ce:brainstorm` loads the `brainstorming` skill for question techniques and approach exploration patterns.
+
+---
+
+## Architecture & Design
+
+Skills for building AI-first, agent-native systems.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `agent-native-architecture` | Build AI agents using prompt-native architecture | Building tools for AI agents, MCP servers, agent features |
+
+<Accordion title="What is prompt-native architecture?">
+Prompt-native (or agent-native) architecture means designing systems where:
+
+- **Action parity**: AI agents can do everything humans can via tools/APIs
+- **Context parity**: AI agents have access to the same information humans do
+- **Self-modification**: Systems can be improved by the agents using them
+
+The `agent-native-architecture` skill includes references on:
+- MCP tool design
+- System prompt patterns
+- Dynamic context injection
+- Files as universal interfaces
+- Agent execution patterns
+- Testing agent-native features
+
+See `agent-native-architecture/SKILL.md` for full details.
+</Accordion>
+
+---
+
+## Development Tools
+
+Skills for writing high-quality code following specific patterns and frameworks.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `andrew-kane-gem-writer` | Write Ruby gems following Andrew Kane's patterns | Creating Ruby gems, writing gem documentation |
+| `compound-docs` | Capture solved problems as categorized documentation | Running `/ce:compound` command |
+| `create-agent-skills` | Expert guidance for creating Claude Code skills | Creating or editing skills, running `/create-agent-skill` |
+| `dhh-rails-style` | Write Ruby/Rails code in DHH's 37signals style | Rails development, reviewing Rails code |
+| `dspy-ruby` | Build type-safe LLM applications with DSPy.rb | Building LLM-powered features in Ruby |
+| `frontend-design` | Create production-grade frontend interfaces | Frontend development, UI implementation |
+| `skill-creator` | Guide for creating effective Claude Code skills | Creating new skills, skill structure questions |
+
+<Accordion title="DHH Rails Style - What does it enforce?">
+The `dhh-rails-style` skill enforces 37signals/Rails core team conventions:
+
+**Architecture:**
+- Majestic Monolith over microservices
+- Hotwire (Turbo + Stimulus) over React/Vue
+- Active Record over repository pattern
+
+**Code Style:**
+- Simplicity over abstraction
+- Convention over configuration
+- Integrated over isolated
+
+**References included:**
+- `architecture.md` - System design patterns
+- `controllers.md` - RESTful controller conventions
+- `models.md` - Active Record patterns
+- `frontend.md` - Hotwire/Stimulus patterns
+- `testing.md` - Testing philosophy
+- `gems.md` - Preferred gem choices
+
+See `dhh-rails-style/SKILL.md` for complete reference.
+</Accordion>
+
+<Accordion title="Andrew Kane Gem Writer - Best for what?">
+The `andrew-kane-gem-writer` skill is perfect for creating Ruby gems that:
+
+- Provide adapters for multiple databases/services
+- Need clean, minimal APIs
+- Follow Rails integration patterns
+- Have comprehensive test coverage
+
+**Patterns included:**
+- Module organization for extensibility
+- Database adapter patterns (Postgres, MySQL, SQLite)
+- Rails integration (generators, initializers)
+- Testing patterns for multiple adapters
+- README structure and documentation style
+
+Examples: gems like `pgvector`, `neighbor`, `searchkick` follow these patterns.
+</Accordion>
+
+---
+
+## Content & Workflow
+
+Skills for documentation, planning, and collaborative workflows.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `brainstorming` | Explore requirements and approaches through collaborative dialogue | Running `/ce:brainstorm` command |
+| `document-review` | Improve documents through structured self-review | Reviewing plans, documentation, brainstorms |
+| `every-style-editor` | Review copy for Every's style guide compliance | Editing content for Every publications |
+| `file-todos` | File-based todo tracking system | Managing todos across files |
+| `git-worktree` | Manage Git worktrees for parallel development | Working on multiple branches simultaneously |
+| `proof` | Create, edit, and share documents via Proof collaborative editor | Sharing plans/brainstorms for collaboration |
+| `resolve-pr-parallel` | Resolve PR review comments in parallel | Running `/resolve_pr_parallel` command |
+| `setup` | Configure which review agents run for your project | Running `/ce:review --setup` or initial setup |
+
+<Accordion title="Brainstorming Skill - Question Techniques">
+The `brainstorming` skill provides:
+
+**Question patterns:**
+- Open-ended exploration questions
+- Multiple choice for common decisions
+- YAGNI prompts ("Do you really need...?")
+- Constraint discovery questions
+- Success criteria validation
+
+**Approach exploration:**
+- Generating 2-3 concrete alternatives
+- Pros/cons analysis framework
+- Simplicity bias (prefer simpler solutions)
+- Leading with recommendations
+
+**Document structure:**
+- What We're Building
+- Why This Approach
+- Key Decisions
+- Open Questions
+- Next Steps
+
+Loads automatically when running `/ce:brainstorm`.
+</Accordion>
+
+<Accordion title="File Todos - How does it work?">
+The `file-todos` skill provides a system for tracking todos across files:
+
+**Format:**
+```markdown
+# TODO.md
+
+## Feature: User Authentication
+- [ ] Implement login flow (app/controllers/sessions_controller.rb:42)
+- [ ] Add password reset (app/mailers/user_mailer.rb:15)
+- [x] Write tests (spec/features/authentication_spec.rb:10)
+```
+
+**Features:**
+- File and line number references
+- Hierarchical organization
+- Checkbox tracking
+- Links to specific code locations
+
+Includes template: `file-todos/assets/todo-template.md`
+</Accordion>
+
+---
+
+## Multi-Agent Orchestration
+
+Skills for coordinating multiple AI agents working in parallel.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `orchestrating-swarms` | Comprehensive guide to multi-agent swarm orchestration | Running `/slfg`, coordinating parallel agents |
+
+<Accordion title="Orchestrating Swarms - What can it do?">
+The `orchestrating-swarms` skill provides patterns for:
+
+**Parallel agent execution:**
+- Spawning 10, 20, 30+ agents simultaneously
+- Task decomposition strategies
+- Result aggregation patterns
+- Conflict resolution when agents disagree
+
+**Use cases:**
+- Running all review agents in parallel (security, performance, style, etc.)
+- Parallel code generation for multiple files
+- Simultaneous research across multiple domains
+- Distributed testing and validation
+
+**Patterns:**
+```markdown
+Task security-sentinel: "Review authentication"
+Task performance-oracle: "Analyze queries"
+Task kieran-rails-reviewer: "Check conventions"
+Task dhh-rails-reviewer: "Verify style"
+# All 4 run simultaneously
+```
+
+Used by `/slfg` (swarm LFG) for maximum parallelization.
+</Accordion>
+
+---
+
+## File Transfer
+
+Skills for uploading files to cloud storage.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `rclone` | Upload files to S3, Cloudflare R2, Backblaze B2, and cloud storage | Uploading files, cloud storage operations |
+
+<Accordion title="Rclone - Supported providers">
+The `rclone` skill supports file uploads to:
+
+- AWS S3
+- Cloudflare R2
+- Backblaze B2
+- Google Cloud Storage
+- Azure Blob Storage
+- DigitalOcean Spaces
+- And 40+ other cloud storage providers
+
+**Requirements:**
+- `rclone` installed (`brew install rclone` or `apt install rclone`)
+- Configured remote in `~/.config/rclone/rclone.conf`
+
+**Usage:**
+```bash
+rclone copy local-file.txt remote:bucket/path/
+```
+
+The skill provides configuration examples and common usage patterns.
+</Accordion>
+
+---
+
+## Browser Automation
+
+Skills for automating browser interactions.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `agent-browser` | CLI-based browser automation using Vercel's agent-browser | Browser testing, web scraping, E2E tests |
+
+<Accordion title="Agent Browser - Installation & Usage">
+The `agent-browser` skill uses Vercel's agent-browser CLI for browser automation.
+
+**Installation:**
+```bash
+npm install -g agent-browser
+agent-browser install  # Downloads Chromium
+```
+
+**Features:**
+- Headless browser control
+- Screenshot capture
+- Form filling and interaction
+- Page navigation and waiting
+- JavaScript execution
+
+**Used by:**
+- `/test-browser` - Test PR-affected pages
+- `/feature-video` - Record feature walkthroughs
+
+**Example:**
+```bash
+agent-browser navigate https://example.com
+agent-browser click "#login-button"
+agent-browser fill "#email" "user@example.com"
+agent-browser screenshot login.png
+```
+
+See `agent-browser/SKILL.md` for comprehensive CLI reference.
+</Accordion>
+
+---
+
+## Image Generation
+
+Skills for generating and editing images using AI.
+
+| Skill | Description | When It Activates |
+|-------|-------------|-------------------|
+| `gemini-imagegen` | Generate and edit images using Google's Gemini API | Image generation, image editing tasks |
+
+<Accordion title="Gemini ImageGen - Features & Requirements">
+**Features:**
+- **Text-to-image generation** - Create images from descriptions
+- **Image editing and manipulation** - Modify existing images
+- **Multi-turn refinement** - Iteratively improve images
+- **Multiple reference composition** - Combine up to 14 reference images
+
+**Requirements:**
+- `GEMINI_API_KEY` environment variable set
+- Python packages: `google-genai`, `pillow`
+
+**Installation:**
+```bash
+export GEMINI_API_KEY=your-api-key
+pip install google-genai pillow
+```
+
+**Example usage:**
+```markdown
+Generate a hero image for our landing page:
+- Modern, minimalist design
+- Blue and white color scheme
+- Show collaboration between humans and AI
+- 1200x630 dimensions for social sharing
+```
+
+The skill provides detailed API usage and prompting patterns.
+</Accordion>
+
+---
+
+## Skill Locations
+
+Skills are stored in the plugin directory:
+
+```
+plugins/compound-engineering/skills/
+├── agent-native-architecture/
+│   ├── SKILL.md
+│   └── references/
+│       ├── mcp-tool-design.md
+│       ├── system-prompt-design.md
+│       └── ...
+├── dhh-rails-style/
+│   ├── SKILL.md
+│   └── references/
+│       ├── architecture.md
+│       ├── controllers.md
+│       └── ...
+├── brainstorming/
+│   └── SKILL.md
+└── ...
+```
+
+Each skill has:
+- **SKILL.md** - Main skill file with instructions
+- **references/** - Supporting documentation (optional)
+- **assets/** - Templates and examples (optional)
+- **scripts/** - Executable helpers (optional)
+- **workflows/** - Sub-workflows (optional)
+
+---
+
+## Creating Custom Skills
+
+Use the `/create-agent-skill` command to create new skills:
+
+```bash
+/create-agent-skill
+```
+
+This loads the `create-agent-skills` skill which provides:
+- Skill structure templates
+- Best practices for skill writing
+- Validation workflows
+- Reference organization patterns
+
+**Skill frontmatter format:**
+
+```yaml
+---
+name: my-skill-name
+description: What it does and when to use it. Explains code with diagrams. Use when exploring how code works.
+---
+```
+
+The description should explain **what the skill does** and **when to use it**.
+
+See the [skill-creator reference](/plugin/skills#development-tools) for detailed guidance.
+
+---
+
+## Skill Compliance
+
+All skills in this plugin follow the official Claude Code skill specification:
+
+<Note>
+**Key requirements:**
+
+- **YAML frontmatter** - `name` and `description` required
+- **Markdown links** - All references must use proper markdown links, not backticks
+- **Imperative style** - Use verb-first instructions ("Run X", "Check Y")
+- **Objective language** - Avoid second person ("you should"), use objective tone
+
+The `/heal-skill` command can fix common compliance issues automatically.
+</Note>
+
+---
+
+## See Also
+
+- [Agents](/plugin/agents) - Specialized agents that use skill knowledge
+- [Commands](/plugin/commands) - Slash commands that load skills
+- [Creating Skills Guide](https://docs.claude.ai/docs/claude-code/skills) - Detailed skill authoring guide

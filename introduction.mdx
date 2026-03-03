@@ -1,0 +1,113 @@
+---
+title: Introduction
+description: Convert Claude Code plugins to OpenCode, Codex, Droid, and other AI agent platforms. Includes the powerful compound-engineering plugin with 29 agents, 22 commands, and 20 skills.
+---
+
+# Compound Engineering Plugin
+
+A CLI tool that converts Claude Code plugins to other AI agent platform formats, bundled with the **Compound Engineering Plugin** — tools that make each unit of engineering work easier than the last.
+
+## What is Compound Plugin?
+
+Compound Plugin is a Bun/TypeScript CLI that bridges the gap between AI coding assistant platforms. It converts Claude Code plugins into native formats for:
+
+- **OpenCode** - Commands, agents, skills, and MCP servers
+- **Codex** - Prompts and skills
+- **Factory Droid** - Native tool mappings
+- **Pi** - Prompts, skills, and MCPorter interoperability
+- **Gemini CLI** - Skills and namespaced commands
+- **GitHub Copilot** - Agent markdown files with MCP integration
+- **Kiro CLI** - JSON configs with prompt files
+- **Windsurf** - Skills and workflows with MCP config
+- **OpenClaw** - TypeScript skill extensions
+- **Qwen Code** - Agent YAML configurations
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Plugin Conversion" icon="arrows-rotate">
+    Convert Claude Code plugins to 10+ AI agent platforms with a single command. Automatically handles tool mappings, permissions, and format differences.
+  </Card>
+  
+  <Card title="Bundled Plugin" icon="box">
+    Includes the compound-engineering plugin with 29 specialized agents, 22 workflow commands, and 20 skills for code review, planning, and documentation.
+  </Card>
+  
+  <Card title="Config Sync" icon="sync">
+    Sync your personal Claude Code configuration (skills, commands, MCP servers) to all detected AI coding tools automatically.
+  </Card>
+  
+  <Card title="Zero Install" icon="bolt">
+    Use via `bunx` without global installation. Run conversions instantly with no setup required.
+  </Card>
+</CardGroup>
+
+## The Compound Engineering Plugin
+
+The bundled plugin embodies a **compound engineering philosophy**: each unit of work should make subsequent work easier, not harder.
+
+### Components at a Glance
+
+| Component | Count | Purpose |
+|-----------|-------|----------|
+| **Agents** | 29 | Specialized reviewers, researchers, and workflow agents |
+| **Commands** | 22 | Workflow automation and utility commands |
+| **Skills** | 20 | Reusable knowledge modules for architecture, design, and tooling |
+| **MCP Servers** | 1 | Context7 framework documentation lookup |
+
+### Core Workflow
+
+The plugin centers around a compound workflow:
+
+```
+Plan → Work → Review → Compound → Repeat
+```
+
+- **`/ce:plan`** - Turn feature ideas into detailed implementation plans
+- **`/ce:work`** - Execute plans with worktrees and task tracking
+- **`/ce:review`** - Multi-agent code review before merging
+- **`/ce:compound`** - Document learnings to make future work easier
+
+Each cycle compounds: plans inform future plans, reviews catch more issues, patterns get documented.
+
+### Philosophy
+
+> "Each unit of engineering work should make subsequent units easier—not harder."
+
+Traditional development accumulates technical debt. Compound engineering inverts this:
+
+- **80% planning and review** - Catch issues early, plan thoroughly
+- **20% execution** - High-quality implementations are easier to extend
+- **Codify knowledge** - Captured learnings become reusable skills
+- **Quality compounds** - Every review improves your review agents
+
+## Why Use This Tool?
+
+<Info>
+  **Cross-platform flexibility**: Use the same powerful agents, skills, and workflows across different AI coding assistants. No need to rebuild your tooling when switching platforms.
+</Info>
+
+Whether you want to:
+- Install the compound-engineering plugin to your preferred AI assistant
+- Convert your own Claude Code plugins to other formats
+- Sync your personal configuration across multiple tools
+
+This CLI makes it seamless.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install prerequisites and verify your setup
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Install the compound-engineering plugin in 30 seconds
+  </Card>
+</CardGroup>
+
+## Learn More
+
+- [Full component reference](https://github.com/EveryInc/compound-engineering-plugin/blob/main/plugins/compound-engineering/README.md) - All agents, commands, and skills
+- [Compound engineering: how Every codes with agents](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents) - Philosophy and approach
+- [The story behind compounding engineering](https://every.to/source-code/my-ai-had-already-fixed-the-code-before-i-saw-it) - Origin story

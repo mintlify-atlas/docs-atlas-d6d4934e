@@ -1,0 +1,228 @@
+---
+title: Configuration
+description: Configure conversion behavior with environment variables and command options
+---
+
+The CLI provides several configuration options to control how plugins are converted and installed.
+
+## Environment Variables
+
+### COMPOUND_PLUGIN_GITHUB_SOURCE
+
+Override the default GitHub repository when installing plugins by name.
+
+```bash
+export COMPOUND_PLUGIN_GITHUB_SOURCE="https://github.com/your-org/your-plugin-repo"
+compound-plugin install my-plugin
+```
+
+**Default:** `https://github.com/EveryInc/compound-engineering-plugin`
+
+**Use case:** Test plugin installation from a fork or private repository during development.
+
+## Permission Modes
+
+Control how tool permissions are written to `opencode.json` using the `--permissions` flag.
+
+### none (default)
+
+No permissions are written to the global config. This prevents polluting user configuration with plugin-specific permissions.
+
+```bash
+compound-plugin install my-plugin --permissions none
+```
+
+**Generated config:**
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": { ... }
+}
+```
+
+### broad
+
+All tools are enabled with allow permissions. Useful for development or when you trust the plugin completely.
+
+```bash
+compound-plugin convert ./my-plugin --permissions broad
+```
+
+**Generated config:**
+```json
+{
+  "permission": {
+    "read": "allow",
+    "write": "allow",
+    "edit": "allow",
+    "bash": "allow",
+    "grep": "allow",
+    "glob": "allow",
+    "webfetch": "allow"
+  },
+  "tools": {
+    "read": true,
+    "write": true,
+    "edit": true,
+    "bash": true
+  }
+}
+```
+
+### from-commands
+
+Permissions are inferred from the `allowed-tools` frontmatter in command files. This provides fine-grained control based on what each command declares.
+
+```bash
+compound-plugin convert ./my-plugin --permissions from-commands
+```
+
+**Example command with allowed-tools:**
+```yaml
+---
+name: build
+allowed-tools:
+  - bash(npm run build)
+  - read(package.json)
+  - write(dist/**)
+---
+```
+
+**Generated config:**
+```json
+{
+  "permission": {
+    "bash": {
+      "*": "deny",
+      "npm run build": "allow"
+    },
+    "read": {
+      "*": "deny",
+      "package.json": "allow"
+    },
+    "write": {
+      "*": "deny",
+      "dist/**": "allow"
+    }
+  }
+}
+```
+
+## Agent Modes
+
+Control the default mode for converted agents using the `--agent-mode` flag.
+
+### subagent (default)
+
+Agents are designed to be called by the primary agent for specialized tasks.
+
+```bash
+compound-plugin install my-plugin --agent-mode subagent
+```
+
+**Generated agent:**
+```yaml
+---
+description: Specialized code reviewer
+mode: subagent
+---
+```
+
+### primary
+
+Agents can be directly invoked by the user and handle full conversations.
+
+```bash
+compound-plugin install my-plugin --agent-mode primary
+```
+
+**Generated agent:**
+```yaml
+---
+description: Full-featured assistant
+mode: primary
+---
+```
+
+## Scope Options
+
+Some targets support installation at different scopes using the `--scope` flag.
+
+### global
+
+Install to the user's home directory (e.g., `~/.config/opencode` or `~/.codex`).
+
+```bash
+compound-plugin install my-plugin --to windsurf --scope global
+```
+
+### workspace
+
+Install to the current project directory (e.g., `./.opencode` or `./.cascade`).
+
+```bash
+compound-plugin install my-plugin --to windsurf --scope workspace
+```
+
+<Note>
+  Not all targets support both scopes. Windsurf supports both `global` and `workspace`, defaulting to `global`. OpenCode and most other targets only support global scope.
+</Note>
+
+## Temperature Inference
+
+The CLI can automatically infer appropriate temperature values for agents based on their name and description.
+
+### Enable (default)
+
+```bash
+compound-plugin install my-plugin --infer-temperature
+```
+
+**Inference rules:**
+- **0.1**: review, audit, security, sentinel, oracle, lint, verification, guardian
+- **0.2**: plan, planning, architecture, strategist, analysis, research
+- **0.3**: doc, readme, changelog, editor, writer (default for most agents)
+- **0.6**: brainstorm, creative, ideate, design, concept
+
+### Disable
+
+```bash
+compound-plugin install my-plugin --infer-temperature false
+```
+
+When disabled, no temperature value is written to agent frontmatter, allowing the target platform to use its defaults.
+
+## Multi-Target Installation
+
+Install to multiple target formats in a single command using the `--also` flag.
+
+```bash
+compound-plugin install my-plugin --to opencode --also codex,droid
+```
+
+This installs to:
+- `~/.config/opencode/` (primary target)
+- `~/.codex/` (additional target)
+- `~/droid/` (additional target)
+
+## Auto-Detection Mode
+
+Use `--to all` to automatically detect and install to all supported AI coding tools on your system.
+
+```bash
+compound-plugin install my-plugin --to all
+```
+
+**Detection checks:**
+- **OpenCode**: `~/.config/opencode/`
+- **Codex**: `~/.codex/`
+- **Droid**: `~/.droid/`
+- **Pi**: `~/.pi/agent/`
+- **Copilot**: `~/.copilot/`
+- **Gemini**: `~/.gemini/`
+- **Kiro**: `~/.kiro/`
+- **Windsurf**: `~/.cascade/`
+- **OpenClaw**: `~/.openclaw/extensions/`
+- **Qwen**: `~/.qwen/extensions/`
+
+The command outputs which tools were detected and skips any that aren't installed.

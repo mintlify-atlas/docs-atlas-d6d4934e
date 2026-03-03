@@ -1,0 +1,171 @@
+---
+title: sync
+description: Sync Claude Code config to other AI coding tools
+---
+
+The `sync` command reads your existing Claude Code configuration from `~/.claude/` and synchronizes it to other installed AI coding tools. This includes skills, commands, and MCP servers.
+
+## Usage
+
+```bash
+compound-plugin sync [options]
+```
+
+## Options
+
+<ParamField path="--target" type="string" default="all">
+  Target tool to sync to.
+  
+  **Available targets:**
+  - `all` (default) - Sync to all detected AI coding tools
+  - `opencode` - Sync to OpenCode only
+  - Other supported tools (varies by implementation)
+  
+  When set to `all`, the CLI auto-detects installed tools and syncs to each one.
+</ParamField>
+
+<ParamField path="--claude-home" type="string">
+  Path to Claude home directory.
+  
+  **Default:** `~/.claude`
+  
+  Override this if your Claude Code config is in a non-standard location.
+</ParamField>
+
+## Examples
+
+### Sync to All Detected Tools
+
+```bash
+compound-plugin sync
+```
+
+Auto-detects all installed AI coding tools and syncs your Claude config to each one.
+
+**Example output:**
+```
+Syncing to 3 detected tool(s)...
+  ✓ opencode — Found config at ~/.config/opencode
+  ✓ codex — Found config at ~/.codex
+  ✗ pi — Not installed
+  ✓ cursor — Found config at ~/.cursor
+
+✓ Synced to opencode: ~/.config/opencode
+✓ Synced to codex: ~/.codex
+✓ Synced to cursor: ~/.cursor
+```
+
+### Sync to Specific Target
+
+```bash
+compound-plugin sync --target opencode
+```
+
+Syncs only to OpenCode, skipping other tools.
+
+**Example output:**
+```
+Syncing 5 skills, 3 commands, 2 MCP servers...
+✓ Synced to opencode: ~/.config/opencode
+```
+
+### Sync from Custom Claude Home
+
+```bash
+compound-plugin sync --claude-home ~/custom-claude-location
+```
+
+Reads Claude config from a custom directory instead of `~/.claude`.
+
+## What Gets Synced
+
+The sync command copies the following from your Claude Code config:
+
+1. **Skills** - All custom skills from `~/.claude/skills/`
+2. **Commands** - Custom commands from `~/.claude/commands/`
+3. **MCP Servers** - Model Context Protocol server configurations with their environment variables
+
+<Warning>
+  **Security Notice:** MCP server configurations often contain environment variables with API keys, tokens, and other secrets. These are copied to the target config files.
+  
+  The CLI will warn you when syncing MCP servers with potential secrets:
+  
+  ```
+  ⚠️  Warning: MCP servers contain env vars that may include secrets (API keys, tokens).
+     These will be copied to the target config. Review before sharing the config file.
+  ```
+  
+  **Always review synced config files before committing them to version control.**
+</Warning>
+
+## Target Detection
+
+When using `--target all`, the CLI detects installed tools by checking:
+- Config file existence (e.g., `~/.config/opencode/opencode.json`)
+- Installation paths
+- Tool-specific markers
+
+If no tools are detected:
+```
+No AI coding tools detected.
+```
+
+## Use Cases
+
+### Migrate from Claude Code to OpenCode
+
+```bash
+compound-plugin sync --target opencode
+```
+
+One-command migration of all your Claude skills, commands, and MCP servers to OpenCode.
+
+### Keep Multiple Tools in Sync
+
+```bash
+compound-plugin sync --target all
+```
+
+Maintain consistent configuration across all your AI coding tools.
+
+### Sync After Adding New Skills
+
+```bash
+# 1. Add a new skill to ~/.claude/skills/
+echo "..." > ~/.claude/skills/new-skill.md
+
+# 2. Sync to all tools
+compound-plugin sync
+```
+
+Automatically propagate new skills to all your AI coding tools.
+
+## Sync vs. Install/Convert
+
+| Command | Source | Output |
+|---------|--------|--------|
+| `sync` | `~/.claude/` config | Multiple tool configs |
+| `install` | GitHub or local plugin | Single tool format |
+| `convert` | Local plugin directory | Single tool format |
+
+Use `sync` when you want to **copy your existing Claude setup** to other tools.
+
+Use `install` or `convert` when you want to **add a specific plugin** to a tool.
+
+## Output Locations
+
+Sync writes to the default config location for each target:
+
+- **OpenCode:** `~/.config/opencode/`
+  - Skills → `~/.config/opencode/skills/`
+  - Commands → `~/.config/opencode/commands/`
+  - MCP servers → `~/.config/opencode/opencode.json`
+
+- **Codex:** `~/.codex/`
+  - Configuration merged into Codex format
+
+- **Other targets:** Varies by tool implementation
+
+<Note>
+  The sync command performs a **deep merge** with existing configs. It does not overwrite your entire config file, only the relevant sections (skills, commands, MCP servers).
+</Note>

@@ -1,0 +1,245 @@
+---
+title: Gemini CLI
+description: Convert Claude Code plugins to Gemini CLI format with TOML commands
+icon: gem
+---
+
+The Gemini CLI converter creates skills and TOML commands with support for nested namespaces.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to gemini
+```
+
+## Output Structure
+
+Writes to `.gemini/`:
+
+```
+.gemini/
+├── skills/
+│   ├── agent-name/
+│   │   └── SKILL.md      # Agent skills
+│   └── existing-skill/   # Pass-through skills
+├── commands/
+│   ├── simple.toml       # Flat commands
+│   └── workflows/
+│       └── plan.toml     # Nested commands (workflows:plan)
+└── settings.json         # MCP server config
+```
+
+<Info>
+Commands with colons become **nested directories**. `workflows:plan` → `commands/workflows/plan.toml`.
+</Info>
+
+## Conversion Details
+
+### Agents → Skills
+
+Agents are converted to skills:
+
+```markdown
+---
+name: plan-specialist
+description: Planning agent for complex features
+---
+
+## Capabilities
+- Break down complex features
+- Create detailed plans
+
+You are a planning specialist...
+```
+
+### Commands → TOML Files
+
+Commands become TOML files with multi-line string prompts:
+
+```toml
+description = "Create implementation plan"
+prompt = """
+You are a planning specialist.
+Use the repo-research-analyst skill to: research the feature.
+
+User request: {{args}}
+"""
+```
+
+**Nested commands**:
+```
+workflows:plan → commands/workflows/plan.toml
+ce:work → commands/ce/work.toml
+simple → commands/simple.toml
+```
+
+<Note>
+If a command has `argumentHint`, `{{args}}` is appended to the prompt to capture user input.
+</Note>
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Use the repo-research-analyst skill to: feature_description
+```
+
+**Agent references**:
+```diff
+- Consult @code-review-agent
++ Consult the code-review-agent skill
+```
+
+**Path rewriting**:
+```diff
+- ~/.claude/skills/
++ ~/.gemini/skills/
+- .claude/
++ .gemini/
+```
+
+### MCP Servers
+
+MCP servers are merged into `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    },
+    "remote-api": {
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Supports both stdio (`command`) and remote (`url`) servers.
+
+<Info>
+Existing `settings.json` is preserved. Plugin MCP servers are merged into `mcpServers` object.
+</Info>
+
+## TOML Format
+
+Commands use TOML with multi-line strings:
+
+```toml
+description = "Short description"
+prompt = """
+Multi-line prompt body.
+Line breaks and "quotes" are preserved.
+Backslashes (\) are escaped.
+"""
+```
+
+**Escaping rules**:
+- Backslashes: `\` → `\\`
+- Triple quotes: `"""` → `\"\"\"` (rare in practice)
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output Path |
+|-------|-------------|
+| `workflows:plan` | `commands/workflows/plan.toml` |
+| `Plan Review` | `commands/plan-review.toml` |
+| `nested:cmd:deep` | `commands/nested/cmd/deep.toml` |
+| `UPPERCASE` | `commands/uppercase.toml` |
+
+Rules:
+- Lowercase only
+- Colons → directory separators
+- Slashes, spaces → hyphens
+- Special characters removed
+
+## Example Output
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create implementation plan",
+  "argumentHint": "<feature description>",
+  "body": "You are a planning specialist.\nTask repo-research-analyst(research the feature)."
+}
+```
+
+**Output** (`.gemini/commands/workflows/plan.toml`):
+```toml
+description = "Create implementation plan"
+prompt = """
+You are a planning specialist.
+Use the repo-research-analyst skill to: research the feature.
+
+User request: {{args}}
+"""
+```
+
+**Input** (Claude agent):
+```json
+{
+  "name": "code-review-agent",
+  "description": "Review code for issues",
+  "capabilities": ["Identify bugs", "Suggest improvements"],
+  "body": "You review code carefully."
+}
+```
+
+**Output** (`.gemini/skills/code-review-agent/SKILL.md`):
+```markdown
+---
+name: code-review-agent
+description: Review code for issues
+---
+
+## Capabilities
+- Identify bugs
+- Suggest improvements
+
+You review code carefully.
+```
+
+## Limitations
+
+- **No hooks support**: Gemini CLI uses a different hook format (BeforeTool/AfterTool). A warning is logged if hooks are present.
+- **Description truncation**: Descriptions are limited to 1024 characters
+- **Skills not mirrored**: Gemini discovers skills from `~/.agents/skills`, so sync avoids duplicates
+
+<Warning>
+If your plugin has hooks, they will **not** be converted. Gemini CLI's hook format is incompatible with Claude's event-based hooks.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to Gemini:
+
+```bash
+bunx @every-env/compound-plugin sync --target gemini
+```
+
+This syncs:
+- MCP servers from `~/.claude/settings.json` (merged into `.gemini/settings.json`)
+- Personal skills are **not** synced (Gemini auto-discovers from `~/.agents/skills`)
+- Personal commands from `~/.claude/commands/` (as TOML files)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Gemini CLI Documentation" icon="gem" href="https://ai.google.dev/gemini-api/docs">
+    Official Gemini CLI documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Gemini
+  </Card>
+</CardGroup>

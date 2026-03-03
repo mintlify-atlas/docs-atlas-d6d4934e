@@ -1,0 +1,329 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when using the Compound Engineering Plugin CLI
+---
+
+This page covers common errors and how to resolve them.
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Permission denied errors">
+    **Error message:**
+    ```
+    Error: EACCES: permission denied, open '/home/user/.config/opencode/opencode.json'
+    ```
+
+    **Cause:** The CLI doesn't have write permissions to the target directory.
+
+    **Solutions:**
+
+    1. **Check directory permissions:**
+       ```bash
+       ls -la ~/.config/opencode/
+       ```
+
+    2. **Fix ownership:**
+       ```bash
+       sudo chown -R $USER:$USER ~/.config/opencode/
+       ```
+
+    3. **Create directory if missing:**
+       ```bash
+       mkdir -p ~/.config/opencode
+       ```
+
+    4. **Use explicit output path:**
+       ```bash
+       compound-plugin install my-plugin --output ./my-output
+       ```
+  </Accordion>
+
+  <Accordion title="Git clone failures">
+    **Error message:**
+    ```
+    Error: Failed to clone https://github.com/EveryInc/compound-engineering-plugin.
+    fatal: could not read Username for 'https://github.com': terminal prompts disabled
+    ```
+
+    **Cause:** Git authentication failed or network issues prevented cloning the plugin repository.
+
+    **Solutions:**
+
+    1. **Check network connectivity:**
+       ```bash
+       curl -I https://github.com
+       ```
+
+    2. **Test git access:**
+       ```bash
+       git ls-remote https://github.com/EveryInc/compound-engineering-plugin
+       ```
+
+    3. **Use local plugin instead:**
+       ```bash
+       git clone https://github.com/EveryInc/compound-engineering-plugin
+       compound-plugin convert ./compound-engineering-plugin/plugins/my-plugin
+       ```
+
+    4. **Configure git credentials:**
+       ```bash
+       git config --global credential.helper store
+       ```
+
+    5. **Use SSH instead of HTTPS:**
+       ```bash
+       export COMPOUND_PLUGIN_GITHUB_SOURCE="git@github.com:EveryInc/compound-engineering-plugin"
+       compound-plugin install my-plugin
+       ```
+  </Accordion>
+
+  <Accordion title="Plugin not found errors">
+    **Error message:**
+    ```
+    Error: Could not find plugin my-plugin in https://github.com/EveryInc/compound-engineering-plugin.
+    ```
+
+    **Cause:** The plugin name doesn't exist in the repository, or the directory structure is incorrect.
+
+    **Solutions:**
+
+    1. **List available plugins:**
+       ```bash
+       compound-plugin list
+       ```
+
+    2. **Check plugin name spelling:**
+       ```bash
+       # Correct:
+       compound-plugin install compound-engineering
+       
+       # Incorrect:
+       compound-plugin install compound_engineering
+       ```
+
+    3. **Verify plugin structure locally:**
+       ```bash
+       ls -la ./my-plugin/.claude-plugin/plugin.json
+       ```
+
+       The plugin directory must contain:
+       ```
+       my-plugin/
+       ├── .claude-plugin/
+       │   └── plugin.json
+       ├── agents/
+       ├── commands/
+       └── skills/
+       ```
+
+    4. **Use absolute or relative path:**
+       ```bash
+       compound-plugin convert ~/projects/my-plugin
+       compound-plugin convert ./my-plugin
+       ```
+  </Accordion>
+
+  <Accordion title="Missing .claude-plugin/plugin.json">
+    **Error message:**
+    ```
+    Error: Could not find .claude-plugin/plugin.json under /path/to/plugin
+    ```
+
+    **Cause:** The plugin directory is missing the required manifest file.
+
+    **Solution:**
+
+    Create the manifest file with minimal required fields:
+
+    ```json
+    {
+      "name": "my-plugin",
+      "version": "1.0.0",
+      "description": "My plugin description"
+    }
+    ```
+
+    Place it at `.claude-plugin/plugin.json` in your plugin root:
+
+    ```bash
+    mkdir -p my-plugin/.claude-plugin
+    cat > my-plugin/.claude-plugin/plugin.json << 'EOF'
+    {
+      "name": "my-plugin",
+      "version": "1.0.0",
+      "description": "My plugin description",
+      "agents": "agents",
+      "commands": "commands",
+      "skills": "skills"
+    }
+    EOF
+    ```
+  </Accordion>
+
+  <Accordion title="Unknown target errors">
+    **Error message:**
+    ```
+    Error: Unknown target: cursor
+    ```
+
+    **Cause:** The specified target format isn't supported.
+
+    **Solution:**
+
+    Use a supported target:
+
+    ```bash
+    # Supported targets:
+    compound-plugin install my-plugin --to opencode
+    compound-plugin install my-plugin --to codex
+    compound-plugin install my-plugin --to droid
+    compound-plugin install my-plugin --to pi
+    compound-plugin install my-plugin --to copilot
+    compound-plugin install my-plugin --to gemini
+    compound-plugin install my-plugin --to kiro
+    compound-plugin install my-plugin --to windsurf
+    compound-plugin install my-plugin --to openclaw
+    compound-plugin install my-plugin --to qwen
+    compound-plugin install my-plugin --to all
+    ```
+
+    Or check the target's implementation status in `src/targets/index.ts`.
+  </Accordion>
+
+  <Accordion title="Invalid permission mode errors">
+    **Error message:**
+    ```
+    Error: Unknown permissions mode: strict
+    ```
+
+    **Cause:** Invalid value passed to `--permissions` flag.
+
+    **Solution:**
+
+    Use a valid permission mode:
+
+    ```bash
+    # Valid modes:
+    compound-plugin install my-plugin --permissions none
+    compound-plugin install my-plugin --permissions broad
+    compound-plugin install my-plugin --permissions from-commands
+    ```
+
+    See [Configuration > Permission Modes](/advanced/configuration#permission-modes) for details.
+  </Accordion>
+
+  <Accordion title="Tool detection failures">
+    **Error message:**
+    ```
+    No AI coding tools detected. Install at least one tool first.
+    ```
+
+    **Cause:** Using `--to all` but no supported tools are installed on the system.
+
+    **Solution:**
+
+    Install at least one supported AI coding tool, or specify a target explicitly:
+
+    ```bash
+    # Install to current directory instead:
+    compound-plugin install my-plugin --to opencode --output .
+    ```
+
+    The CLI checks for tools in these locations:
+
+    | Tool | Detection Path |
+    |------|----------------|
+    | OpenCode | `~/.config/opencode/` |
+    | Codex | `~/.codex/` |
+    | Droid | `~/.droid/` |
+    | Pi | `~/.pi/agent/` |
+    | Copilot | `~/.copilot/` |
+    | Gemini | `~/.gemini/` |
+    | Kiro | `~/.kiro/` |
+    | Windsurf | `~/.cascade/` |
+    | OpenClaw | `~/.openclaw/extensions/` |
+    | Qwen | `~/.qwen/extensions/` |
+  </Accordion>
+
+  <Accordion title="Invalid path traversal errors">
+    **Error message:**
+    ```
+    Error: Invalid agents path: ../outside. Paths must stay within the plugin root.
+    ```
+
+    **Cause:** Plugin manifest references paths outside the plugin directory (security protection).
+
+    **Solution:**
+
+    Update `plugin.json` to only reference paths within the plugin:
+
+    ```json
+    {
+      "name": "my-plugin",
+      "agents": "agents",
+      "commands": "commands",
+      "skills": "skills"
+    }
+    ```
+
+    All paths in the manifest must resolve within the plugin root directory.
+  </Accordion>
+
+  <Accordion title="Scope not supported errors">
+    **Error message:**
+    ```
+    Error: Target "opencode" does not support the --scope flag.
+    ```
+
+    **Cause:** You specified `--scope` for a target that doesn't support multiple scopes.
+
+    **Solution:**
+
+    Remove the `--scope` flag, or use a target that supports it:
+
+    ```bash
+    # OpenCode doesn't support --scope:
+    compound-plugin install my-plugin --to opencode
+
+    # Windsurf supports --scope:
+    compound-plugin install my-plugin --to windsurf --scope workspace
+    compound-plugin install my-plugin --to windsurf --scope global
+    ```
+
+    Check [Configuration > Scope Options](/advanced/configuration#scope-options) for which targets support scopes.
+  </Accordion>
+
+  <Accordion title="Target not implemented errors">
+    **Error message:**
+    ```
+    Error: Target codex is registered but not implemented yet.
+    ```
+
+    **Cause:** The target exists in the registry but the implementation is incomplete.
+
+    **Solution:**
+
+    1. **Check implementation status:**
+       Look in `src/targets/index.ts` for the target's `implemented` field.
+
+    2. **Use a different target:**
+       ```bash
+       compound-plugin install my-plugin --to opencode
+       ```
+
+    3. **Contribute the implementation:**
+       Follow the [Adding Target Providers](/advanced/adding-providers) guide to complete the implementation.
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+If you encounter an issue not covered here:
+
+1. **Check existing issues:** [GitHub Issues](https://github.com/EveryInc/compound-engineering-plugin/issues)
+2. **Enable verbose logging:**
+   ```bash
+   DEBUG=* compound-plugin install my-plugin
+   ```
+3. **File a bug report:** Include the error message, command used, and OS information

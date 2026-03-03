@@ -1,0 +1,324 @@
+---
+title: Qwen Code
+description: Convert Claude Code plugins to Qwen Code format with YAML agents
+icon: q
+---
+
+The Qwen Code converter creates YAML agent files, Markdown commands, and extracts settings from MCP environment variables.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to qwen
+```
+
+## Output Structure
+
+Writes to `~/.qwen/extensions/<plugin-name>/`:
+
+```
+~/.qwen/extensions/compound-engineering/
+├── qwen-extension.json       # Extension config
+├── QWEN.md                   # Context file
+├── agents/
+│   └── *.yaml                # Agent configs
+├── commands/
+│   ├── simple.md             # Flat commands
+│   └── workflows/
+│       └── plan.md           # Nested commands (workflows:plan)
+└── skills/
+    └── */                    # Pass-through skills
+```
+
+<Info>
+Qwen uses **YAML for agents** and **Markdown for commands**. Nested commands use directory structure.
+</Info>
+
+## Conversion Details
+
+### Extension Config
+
+**qwen-extension.json**:
+```json
+{
+  "name": "compound-engineering",
+  "version": "1.0.0",
+  "commands": "commands",
+  "skills": "skills",
+  "agents": "agents",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    }
+  },
+  "settings": [
+    {
+      "name": "Filesystem Access Token",
+      "description": "Environment variable for filesystem MCP server",
+      "envVar": "FILESYSTEM_TOKEN",
+      "sensitive": true
+    }
+  ]
+}
+```
+
+<Note>
+The `settings` array is auto-extracted from MCP server env vars that look like placeholders (`${VAR}`, `YOUR_KEY`, etc.).
+</Note>
+
+### Context File
+
+**QWEN.md** (auto-generated):
+```markdown
+# compound-engineering
+
+Compound Engineering Plugin
+
+## Agents
+
+- **plan-specialist**: Planning agent for complex features
+- **code-review-agent**: Review code for issues
+
+## Commands
+
+- **/workflows:plan**: Turn feature ideas into detailed plans
+- **/ce:work**: Execute plans with worktrees and task tracking
+
+## Skills
+
+- compound-engineering-skill
+- repo-research
+```
+
+Provides overview of plugin capabilities.
+
+### Agents → YAML Files
+
+Agents are converted to YAML:
+
+**agents/plan-specialist.yaml**:
+```yaml
+---
+name: plan-specialist
+description: Planning agent for complex features
+model: anthropic/claude-sonnet-4-5
+temperature: 0.2
+---
+
+You are a planning specialist...
+```
+
+**Frontmatter fields**:
+- `name`: Agent name
+- `description`: Agent description
+- `model`: Normalized model with provider prefix
+- `temperature`: Inferred from agent name/description
+
+### Commands → Markdown Files
+
+Commands become `.md` files:
+
+**commands/workflows/plan.md** (for `workflows:plan`):
+```markdown
+---
+description: Turn feature ideas into detailed plans
+model: anthropic/claude-sonnet-4-5
+allowedTools:
+  - Read
+  - Write
+---
+
+You are a planning specialist...
+```
+
+**Nested structure**:
+```
+workflows:plan → commands/workflows/plan.md
+ce:work → commands/ce/work.md
+simple → commands/simple.md
+```
+
+### Settings Extraction
+
+Environment variables with placeholders are extracted as settings:
+
+**Input** (MCP server env):
+```json
+{
+  "env": {
+    "FILESYSTEM_TOKEN": "${FILESYSTEM_TOKEN}",
+    "API_KEY": "YOUR_API_KEY",
+    "ALLOWED_PATHS": "/Users/you/projects"
+  }
+}
+```
+
+**Output** (in `qwen-extension.json`):
+```json
+{
+  "settings": [
+    {
+      "name": "Filesystem Token",
+      "description": "Environment variable for filesystem MCP server",
+      "envVar": "FILESYSTEM_TOKEN",
+      "sensitive": true
+    },
+    {
+      "name": "Api Key",
+      "description": "Environment variable for filesystem MCP server",
+      "envVar": "API_KEY",
+      "sensitive": true
+    }
+  ]
+}
+```
+
+**Sensitive detection**:
+A setting is marked `sensitive: true` if the env var name contains:
+- `KEY`
+- `TOKEN`
+- `SECRET`
+
+<Info>
+Only env vars that look like placeholders are extracted. Concrete values like `/Users/you/projects` are not.
+</Info>
+
+### Path Rewriting
+
+Claude paths are rewritten:
+
+```diff
+- ~/.claude/skills/
++ ~/.qwen/skills/
+- .claude/
++ .qwen/
+```
+
+### MCP Servers
+
+Only **stdio servers** are supported:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "/Users/you/projects"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+Remote MCP servers (HTTP/SSE) are **not supported** and will be skipped with a warning.
+</Warning>
+
+## Model Normalization
+
+Bare model aliases are converted to provider-prefixed names:
+
+| Input | Output |
+|-------|--------|
+| `haiku` | `anthropic/claude-haiku` |
+| `sonnet` | `anthropic/claude-sonnet` |
+| `opus` | `anthropic/claude-opus` |
+| `claude-3-5-sonnet` | `anthropic/claude-3-5-sonnet` |
+| `gpt-4` | `openai/gpt-4` |
+| `gemini-pro` | `google/gemini-pro` |
+| `qwen-max` | `qwen/qwen-max` |
+
+## Temperature Inference
+
+When `inferTemperature: true`, the converter analyzes agent names:
+
+| Pattern | Temperature |
+|---------|-------------|
+| review, audit, security | 0.1 |
+| plan, architecture | 0.2 |
+| doc, readme, changelog | 0.3 |
+| brainstorm, creative | 0.6 |
+| Default | (none) |
+
+## Example Output
+
+**Input** (Claude agent):
+```json
+{
+  "name": "plan-specialist",
+  "description": "Planning agent",
+  "model": "sonnet",
+  "body": "You are a planning specialist."
+}
+```
+
+**Output** (`~/.qwen/extensions/compound-engineering/agents/plan-specialist.yaml`):
+```yaml
+---
+name: plan-specialist
+description: Planning agent
+model: anthropic/claude-sonnet
+temperature: 0.2
+---
+
+You are a planning specialist.
+```
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create plan",
+  "body": "You plan features."
+}
+```
+
+**Output** (`~/.qwen/extensions/compound-engineering/commands/workflows/plan.md`):
+```markdown
+---
+description: Create plan
+---
+
+You plan features.
+```
+
+## Limitations
+
+- **stdio MCP only**: Remote MCP servers are not supported
+- **No hooks support**: Qwen does not have a hooks equivalent
+- **Settings extraction only**: Settings are extracted from env vars, not user-configurable
+- **Nested command structure**: Commands with colons create nested directories
+
+<Warning>
+If your plugin has hooks, they will **not** be converted. Qwen does not support lifecycle hooks.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to Qwen:
+
+```bash
+bunx @every-env/compound-plugin sync --target qwen
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (symlinked)
+- Personal commands from `~/.claude/commands/` (as Qwen commands)
+- MCP servers from `~/.claude/settings.json` (stdio only)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Qwen Code Documentation" icon="q" href="https://qwenlm.github.io/">
+    Official Qwen Code documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Qwen
+  </Card>
+</CardGroup>

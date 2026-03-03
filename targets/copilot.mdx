@@ -1,0 +1,273 @@
+---
+title: GitHub Copilot
+description: Convert Claude Code plugins to GitHub Copilot agent format
+icon: github
+---
+
+The GitHub Copilot converter creates `.agent.md` files with Copilot frontmatter and skill-based commands.
+
+## Installation
+
+```bash
+bunx @every-env/compound-plugin install compound-engineering --to copilot
+```
+
+## Output Structure
+
+Writes to `.github/`:
+
+```
+.github/
+├── agents/
+│   └── *.agent.md        # Agent files
+├── skills/
+│   ├── command-name/
+│   │   └── SKILL.md      # Commands as skills
+│   └── existing-skill/   # Pass-through skills
+└── copilot-mcp-config.json  # MCP server config
+```
+
+<Info>
+Commands are converted to **skills** (not workflows). Copilot invokes them as skills during agent execution.
+</Info>
+
+## Conversion Details
+
+### Agents → .agent.md Files
+
+Agents are converted to Copilot agent files:
+
+```markdown
+---
+description: Planning agent for complex features
+tools:
+  - "*"
+infer: true
+model: claude-sonnet-4-5
+---
+
+## Capabilities
+- Break down complex features
+- Create detailed plans
+
+You are a planning specialist...
+```
+
+**Frontmatter fields**:
+- `description`: Agent description
+- `tools`: Always `["*"]` (all tools allowed)
+- `infer`: Always `true` (Copilot infers tool usage)
+- `model`: Model name (if specified in Claude plugin)
+
+<Warning>
+If agent body exceeds **30,000 characters**, a warning is logged. Copilot may truncate large agents.
+</Warning>
+
+### Commands → Skills
+
+Commands become skills:
+
+```markdown
+---
+name: workflows-plan
+description: Turn feature ideas into detailed plans
+---
+
+## Arguments
+<feature description>
+
+You are a planning specialist. Use the repo-research-analyst skill to: research the feature.
+```
+
+**Namespace flattening**:
+```
+workflows:plan → workflows-plan
+ce:work → ce-work
+simple → simple
+```
+
+### Content Transformation
+
+**Task agent calls**:
+```diff
+- Task repo-research-analyst(feature_description)
++ Use the repo-research-analyst skill to: feature_description
+```
+
+**Slash commands**:
+```diff
+- Run /workflows:plan
++ Run /workflows-plan
+```
+
+**Agent references**:
+```diff
+- Consult @code-review-agent
++ Consult the code-review-agent agent
+```
+
+**Path rewriting**:
+```diff
+- ~/.claude/skills/
++ ~/.copilot/skills/
+- .claude/
++ .github/
+```
+
+### MCP Servers
+
+MCP servers are written to `copilot-mcp-config.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "tools": ["*"],
+      "env": {
+        "COPILOT_MCP_ALLOWED_PATHS": "/Users/you/projects"
+      }
+    },
+    "remote-api": {
+      "type": "sse",
+      "url": "https://api.example.com/mcp",
+      "tools": ["*"],
+      "headers": {
+        "Authorization": "Bearer ${TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**Server types**:
+- `local`: stdio-based servers (command + args)
+- `sse`: Remote servers (SSE transport)
+
+**Environment variable prefixing**:
+All env vars are prefixed with `COPILOT_MCP_`:
+
+```json
+{
+  "env": {
+    "ALLOWED_PATHS": "/Users/you/projects"  // Input
+  }
+}
+
+// Becomes:
+{
+  "env": {
+    "COPILOT_MCP_ALLOWED_PATHS": "/Users/you/projects"  // Output
+  }
+}
+```
+
+<Note>
+Vars already prefixed with `COPILOT_MCP_` are left unchanged.
+</Note>
+
+## Name Normalization
+
+Names are normalized to kebab-case:
+
+| Input | Output |
+|-------|--------|
+| `workflows:plan` | `workflows-plan` |
+| `Plan Review` | `plan-review` |
+| `my/command` | `my-command` |
+| `UPPERCASE` | `uppercase` |
+
+Rules:
+- Lowercase only
+- Colons, slashes, spaces → hyphens
+- Special characters removed
+- Multiple hyphens collapsed
+
+## Example Output
+
+**Input** (Claude agent):
+```json
+{
+  "name": "plan-specialist",
+  "description": "Planning agent",
+  "model": "claude-sonnet-4-5",
+  "capabilities": ["Break down features"],
+  "body": "You are a planning specialist."
+}
+```
+
+**Output** (`.github/agents/plan-specialist.agent.md`):
+```markdown
+---
+description: Planning agent
+tools:
+  - "*"
+infer: true
+model: claude-sonnet-4-5
+---
+
+## Capabilities
+- Break down features
+
+You are a planning specialist.
+```
+
+**Input** (Claude command):
+```json
+{
+  "name": "workflows:plan",
+  "description": "Create plan",
+  "argumentHint": "<feature description>",
+  "body": "You plan features. Task repo-research-analyst(analyze)."
+}
+```
+
+**Output** (`.github/skills/workflows-plan/SKILL.md`):
+```markdown
+---
+name: workflows-plan
+description: Create plan
+---
+
+## Arguments
+<feature description>
+
+You plan features. Use the repo-research-analyst skill to: analyze.
+```
+
+## Limitations
+
+- **No hooks support**: Copilot does not have a hooks equivalent
+- **30K character limit**: Agent bodies over 30,000 characters may be truncated
+- **Commands as skills**: Commands become skills, not slash commands
+- **Env var prefixing**: All MCP env vars are prefixed with `COPILOT_MCP_`
+
+<Warning>
+If your plugin has hooks, they will **not** be converted. Copilot does not support lifecycle hooks.
+</Warning>
+
+## Sync Support
+
+Sync personal Claude config to Copilot:
+
+```bash
+bunx @every-env/compound-plugin sync --target copilot
+```
+
+This syncs:
+- Personal skills from `~/.claude/skills/` (to `~/.copilot/skills/`)
+- Personal commands from `~/.claude/commands/` (as skills)
+- MCP servers from `~/.claude/settings.json` (to `~/.copilot/mcp-config.json`)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="GitHub Copilot Documentation" icon="github" href="https://docs.github.com/en/copilot">
+    Official GitHub Copilot documentation
+  </Card>
+  <Card title="Sync Command" icon="sync" href="/commands/sync">
+    Sync personal Claude config to Copilot
+  </Card>
+</CardGroup>
