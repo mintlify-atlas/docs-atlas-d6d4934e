@@ -1,0 +1,99 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Compound Engineering Plugin",
+  "projectDescription": "CLI tool for converting Claude Code plugins to other AI agent platform formats",
+  "theme": "aspen",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4338ca",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "CLI Commands",
+            "pages": [
+              "commands/overview",
+              "commands/install",
+              "commands/convert",
+              "commands/sync",
+              "commands/list"
+            ]
+          },
+          {
+            "group": "Target Platforms",
+            "pages": [
+              "targets/overview",
+              "targets/opencode",
+              "targets/codex",
+              "targets/droid",
+              "targets/pi",
+              "targets/gemini",
+              "targets/copilot",
+              "targets/kiro",
+              "targets/windsurf",
+              "targets/openclaw",
+              "targets/qwen"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/configuration",
+              "advanced/adding-providers",
+              "advanced/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Plugin Reference",
+        "groups": [
+          {
+            "group": "Compound Engineering",
+            "pages": [
+              "plugin/overview",
+              "plugin/philosophy",
+              "plugin/workflow"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "plugin/agents",
+              "plugin/commands",
+              "plugin/skills",
+              "plugin/mcp-servers"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Convert Claude Code plugins to 10+ AI agent platforms",
+    "Sync personal Claude Code config across tools",
+    "Bundled Compound Engineering plugin with 29 agents",
+    "Automatic detection of installed AI coding tools",
+    "Cross-platform agent format conversion"
+  ],
+  "publicApiSurface": [
+    "bunx @every-env/compound-plugin install <plugin> --to <target>",
+    "bunx @every-env/compound-plugin convert <source> --to <target>",
+    "bunx @every-env/compound-plugin sync --target <target>",
+    "bunx @every-env/compound-plugin list",
+    "/ce:plan - Create implementation plans",
+    "/ce:work - Execute work items systematically",
+    "/ce:review - Run comprehensive code reviews",
+    "/ce:compound - Document solved problems"
+  ]
+}
